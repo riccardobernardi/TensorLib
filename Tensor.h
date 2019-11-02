@@ -16,22 +16,33 @@ static std::vector<T> cummult(std::vector<T> a){
     return a;
 }
 
-template<typename T>
 class Tensor {
 public:
-    Tensor(std::vector<size_t> dims){
+    template<typename T> Tensor(std::vector<size_t> dims){
         _width = dims;
         auto temp = dims;
         temp[0] = 1;
         _strides = cummult(dims);
         _rank = dims.size();
     }
+
+    template<typename T, size_t rank=0> Tensor(std::array<size_t,rank> dims){
+        dims = slice(dims,0, rank);
+        _width = dims;
+        auto temp = dims;
+        temp[0] = 1;
+        _strides = cummult(dims);
+        _rank = rank;
+    }
 private:
     // to be shared
     size_t _rank;
-    std::shared_ptr<std::vector<T>> _vec;
-    std::shared_ptr<std::vector<size_t>> _strides;
-    std::shared_ptr<std::vector<size_t>> _width;
+    std::vector<int> _vec;
+    std::vector<size_t> _strides;
+    std::vector<size_t> _width;
+
 };
+
+
 
 #endif //TENSORLIB_TENSOR_H

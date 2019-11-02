@@ -11,26 +11,56 @@ using namespace std;
 class Tests{
 public:
     void test_base(){
-        int x = 2;
-        int& y = x;
-        int&& tmp = 3;
+        auto NAME = "test_base";
+        try {
+            cout << "--------------------------------------" << endl;
+            int x = 2;
+            int& y = x;
+            int&& tmp = 3;
 
-        cout << x << endl;
-        cout << (y) << endl;
-        cout << (tmp) << endl;
+            cout << x << endl;
+            cout << (y) << endl;
+            cout << (tmp) << endl;
 
-        x = 0;
-        y = 1;
-        tmp = 5;
+            x = 0;
+            y = 1;
+            tmp = 5;
 
-        cout << x << endl;
-        cout << (y) << endl;
-        cout << (tmp) << endl;
+            cout << x << endl;
+            cout << (y) << endl;
+            cout << (tmp) << endl;
+        }catch(...) {
+            cout << "Errore al test" << "test_base";
+        }
     }
 
     void test_cummult(){
-        for (auto i :cummult<int>({1,2,3})){
-            cout<<i<<" ";
+        auto NAME = "test_cummult";
+        try {
+            cout << "--------------------------------------" << endl;
+            for (auto i :cummult<int>({1, 2, 3})) {
+                cout << i << " ";
+            }
+        }catch(...){
+            cout << "Errore al test" << NAME;
+        }
+    }
+
+    void test_Tensor_constructor_no_compile_hint(){
+        auto NAME = "test_cummult";
+        try {
+            Tensor<int> a = Tensor<int>({1,2,3});
+        }catch(...){
+            cout << "Errore al test" << NAME;
+        }
+    }
+
+    void test_Tensor_constructor_with_compile_hint(){
+        auto NAME = "test_cummult";
+        try {
+            Tensor<int,3> a = Tensor<int,3>({1,2,3});
+        }catch(...){
+            cout << "Errore al test" << NAME;
         }
     }
 };
