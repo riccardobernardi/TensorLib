@@ -44,6 +44,11 @@ void test_Tensor_constructor_with_compile_hint(){
     Tensor<int,3> a = Tensor<int,3>({1,2,3});
 }
 
+void test_Tensor_constructor_with_compile_hint_2(){
+    auto NAME = "test_Tensor_constructor_with_compile_hint";
+    Tensor<int,3> a = Tensor<int,3>({1,2,3});
+}
+
 class Tests{
 private:
     vector<function<void()>> _functions;

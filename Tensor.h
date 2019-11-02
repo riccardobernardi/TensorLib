@@ -20,28 +20,23 @@ template<class T = int, size_t rank=0>
 class Tensor {
 public:
 
-    Tensor()= default;
+    Tensor() = default;
 
-    explicit Tensor(std::vector<size_t> dims){
-        std::cout << "hellooooooo";
-        for(auto i : dims){
-            std::cout << i;
-        }
-        if(rank == -1){
-            _width = dims;
-            auto temp = dims;
-            temp[0] = 1;
-            _strides = cummult(temp);
-            _rank = dims.size();
-        }
-        else{
-            dims.resize(rank);
-            _width = dims;
-            auto temp = dims;
-            temp[0] = 1;
-            _strides = cummult(temp);
-            _rank = rank;
-        }
+    explicit Tensor(int dims...){
+        _width = dims;
+        _width.resize(rank);
+        std::vector<size_t> temp = _width;
+        temp[0] = 1;
+        _strides = cummult(temp);
+        _rank = rank;
+    }
+
+    explicit Tensor(const std::vector<size_t>& dims){
+        _width = dims;
+        std::vector<size_t> temp = _width;
+        temp[0] = 1;
+        _strides = cummult(temp);
+        _rank = _width.size();
     }
 
 private:
