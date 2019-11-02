@@ -16,31 +16,41 @@ static std::vector<T> cummult(std::vector<T> a){
     return a;
 }
 
+template<class T = int, size_t rank=0>
 class Tensor {
 public:
-    template<typename T> Tensor(std::vector<size_t> dims){
-        _width = dims;
-        auto temp = dims;
-        temp[0] = 1;
-        _strides = cummult(dims);
-        _rank = dims.size();
+
+    Tensor()= default;
+
+    explicit Tensor(std::vector<size_t> dims){
+        std::cout << "hellooooooo";
+        for(auto i : dims){
+            std::cout << i;
+        }
+        if(rank == -1){
+            _width = dims;
+            auto temp = dims;
+            temp[0] = 1;
+            _strides = cummult(temp);
+            _rank = dims.size();
+        }
+        else{
+            dims.resize(rank);
+            _width = dims;
+            auto temp = dims;
+            temp[0] = 1;
+            _strides = cummult(temp);
+            _rank = rank;
+        }
     }
 
-    template<typename T, size_t rank=0> Tensor(std::array<size_t,rank> dims){
-        dims = slice(dims,0, rank);
-        _width = dims;
-        auto temp = dims;
-        temp[0] = 1;
-        _strides = cummult(dims);
-        _rank = rank;
-    }
 private:
     // to be shared
-    size_t _rank;
-    std::vector<int> _vec;
+    // here things are hidden so you can decide how to access to them, don't be scared of being brave
+    size_t _rank{};
+    std::vector<T> _vec;
     std::vector<size_t> _strides;
     std::vector<size_t> _width;
-
 };
 
 
