@@ -5,25 +5,19 @@
 #ifndef TENSORLIB_TENSOR_H
 #define TENSORLIB_TENSOR_H
 
-template <typename T>
-template <typename T, int rank>
+#include <vector>
+
+template <typename T, size_t rank=0>
 class Tensor {
 private:
     // to be shared
-    std::Array<T> _vec;
-    std::Array<T> _strides;
-    std::Array<T> _width;
+    std::shared_ptr<std::vector<T>> _vec;
+    std::shared_ptr<std::vector<size_t>> _strides;
+    std::shared_ptr<std::vector<size_t>> _width;
 public:
-    //methods
-    Tensor(std::Array<int> dims){
-        _width = dims;
-    }
-
-    Tensor(std::Array<int> dims){
+    Tensor(std::vector<size_t> dims){
         _width = dims;
     }
 };
-
-
 
 #endif //TENSORLIB_TENSOR_H

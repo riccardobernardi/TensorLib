@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/rr/Git_repo/TensorLib/Tensor.h
+vector
+-
+
+/Users/rr/Git_repo/TensorLib/main.cpp
+iostream
+-
+Tensor.h
+/Users/rr/Git_repo/TensorLib/Tensor.h
+
