@@ -7,17 +7,29 @@
 
 #include <vector>
 
-template <typename T, size_t rank=0>
+template<class T>
+static std::vector<T> cummult(std::vector<T> a){
+    for(int i=1; i< a.size(); ++i){
+        a[i] = a[i-1] * a[i];
+    }
+
+    return a;
+}
+
+template<typename T>
 class Tensor {
+public:
+    Tensor(std::vector<size_t> dims){
+        _width = dims;
+        auto temp = dims;
+        temp[0] = 1;
+        _strides = cummult(dims);
+    }
 private:
     // to be shared
     std::shared_ptr<std::vector<T>> _vec;
     std::shared_ptr<std::vector<size_t>> _strides;
     std::shared_ptr<std::vector<size_t>> _width;
-public:
-    Tensor(std::vector<size_t> dims){
-        _width = dims;
-    }
 };
 
 #endif //TENSORLIB_TENSOR_H
