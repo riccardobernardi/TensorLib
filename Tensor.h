@@ -24,9 +24,11 @@ public:
         auto temp = dims;
         temp[0] = 1;
         _strides = cummult(dims);
+        _rank = dims.size();
     }
 private:
     // to be shared
+    size_t _rank;
     std::shared_ptr<std::vector<T>> _vec;
     std::shared_ptr<std::vector<size_t>> _strides;
     std::shared_ptr<std::vector<size_t>> _width;
