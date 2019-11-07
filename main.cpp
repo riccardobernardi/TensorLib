@@ -31,7 +31,7 @@ void test_cummult(){
 
 void test_default_constructor(){
     auto NAME = "test_default_constructor";
-    Tensor<> a = Tensor<>();
+    //Tensor<> a = Tensor<>();
 }
 
 void test_Tensor_constructor_no_compile_hint(){

@@ -7,6 +7,8 @@
 
 #include <vector>
 
+using namespace std;
+
 template<class T>
 static std::vector<T> cummult(std::vector<T> a){
     for(int i=1; i< a.size(); ++i){
@@ -19,31 +21,25 @@ static std::vector<T> cummult(std::vector<T> a){
 template<class T = int, size_t rank=0>
 class Tensor {
 public:
-
-    Tensor() = default;
-
-    explicit Tensor(int dims...){
-        _width = dims;
-        _width.resize(rank);
-        std::vector<size_t> temp = _width;
-        temp[0] = 1;
-        _strides = cummult(temp);
-        _rank = rank;
+    // when the rank is not specified
+    Tensor(std::initializer_list<size_t>&& a){
+        _width = a;
+        _strides = cummult(_width);
+        _rank = a.size();
+        cout << to_string(_rank);
     }
 
-    explicit Tensor(const std::vector<size_t>& dims){
-        _width = dims;
-        std::vector<size_t> temp = _width;
-        temp[0] = 1;
-        _strides = cummult(temp);
-        _rank = _width.size();
+    // when the rank is specified
+    Tensor(int a...){
+        _width = a;
+        _strides = cummult(_width);
+        _rank = a;
+        cout << to_string(_rank);
     }
 
 private:
-    // to be shared
-    // here things are hidden so you can decide how to access to them, don't be scared of being brave
-    size_t _rank{};
-    std::vector<T> _vec;
+    size_t _rank=0;
+    std::shared_ptr<std::vector<T>> _vec;
     std::vector<size_t> _strides;
     std::vector<size_t> _width;
 };
