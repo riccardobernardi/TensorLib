@@ -50,10 +50,23 @@ void test_Tensor_constructor_with_compile_hint_2(){
     Tensor<int,3> a = Tensor<int,3>({1,2,3});
 }
 
-void test_slice_values(){
+void test_slice_values20(){
     auto NAME = "test_slice_values";
     Tensor<int> a = Tensor<int>({2,2,2});
     a.slice(2,0);
+}
+
+void test_slice_values00(){
+    auto NAME = "test_slice_values";
+    Tensor<int> a = Tensor<int>({2,2,2});
+    a.slice(0,0);
+}
+
+void test_correct_widths(){
+    auto NAME = "test_correct_widths";
+    Tensor<int> a = Tensor<int>({2,2,2});
+    a.print_width();
+    a.print_strides();
 }
 
 int main() {
@@ -64,7 +77,9 @@ int main() {
     t.add(test_default_constructor,"test_default_constructor");
     t.add(test_Tensor_constructor_no_compile_hint,"test_Tensor_constructor_no_compile_hint");
     t.add(test_Tensor_constructor_with_compile_hint,"test_Tensor_constructor_with_compile_hint");
-    t.add(test_slice_values,"test_slice_values" );
+    t.add(test_slice_values20,"test_slice_values20" );
+    t.add(test_slice_values00,"test_slice_values00" );
+    t.add(test_correct_widths, "test_correct_widths");
     t.launch_test(-1);
 
 }

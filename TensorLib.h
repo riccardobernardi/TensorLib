@@ -36,9 +36,9 @@ public:
         _width = a;
         _strides = cummult(_width);
         _rank = a.size();
-        _size = cummult(_width)[_width.size()-1];
-        cout << _size << endl;
-        cout << to_string(_rank) << endl;
+        _size = cummult(_width)[0];
+        cout << "size: " << _size << endl;
+        //cout << to_string(_rank) << endl;
     }
 
     // initialize with an array that will be represented as a tensor
@@ -46,17 +46,32 @@ public:
         assert(a.size() == _size);
     }
 
+    void print_width(){
+        for(auto i : _width){
+            cout << i << endl;
+        }
+        cout << "*******" << endl;
+    }
+
+    void print_strides(){
+        for(auto i : _strides){
+            cout << i << endl;
+        }
+        cout << "*******" << endl;
+    }
+
     void slice(size_t start, size_t increment){
         std::vector<size_t> b;
-        b.push_back(start*_width[start]);
-        cout << start << endl;
-        cout << _width[start] << endl;
+        //b.push_back(start*_width[start]);
+        // cout << _size << endl;
+        cout << start*_width[start] << "***" << endl;
 
-        for(int i=0; i<((cummult(_width)[_width.size()-1])/start); ++i){
-            cout << " halo ";
-            size_t index = start*_width[start] + int((start*_width[start]==0?1:start*_width[start]) / (_size)/start);
-            cout << start*_width[start] + int((start*_width[start]==0?1:start*_width[start]) / (_size)/start);
-            b.push_back(index);
+        // cout << _size/_width[start] << endl;
+        for(int i=0; i<(_size - (start*_width[start]==0?1:start*_width[start])) -1; ++i){
+            cout << "ghesbo" << i;
+            // size_t index = start*_width[start] + int((start*_width[start]==0?1:start*_width[start]) / (_size)/start);
+            cout << start*_width[start] + (_size - (start*_width[start]==0?1:start*_width[start]) -1);
+            // b.push_back(index);
         }
     }
 
