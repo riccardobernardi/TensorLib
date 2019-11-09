@@ -54,6 +54,18 @@ public:
         _vec = a._vec;
     }
 
+    Tensor<T>(Tensor<T>& a){
+        cout << "costruttore : Tensor<T>(Tensor<T>& a)" << endl;
+        if (rank!=0){
+            assert(a._rank==rank);
+        }
+        _width = a._width;
+        _strides = a._strides;
+        _rank = a._rank;
+        _size = a._size;
+        _vec = a._vec;
+    }
+
     // initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
         assert(a.size() == _size);
@@ -85,18 +97,27 @@ public:
         }
     }
 
+    /*Tensor<T> operator=(Tensor<T>&& a){
+        return Tensor<T>(a);
+    }*/
+
     size_t operator()(initializer_list<size_t> a){
+        cout << "111111";
         std::vector<size_t> b=a;
         for(auto i: _default){
             b.insert(b.begin() + get<0>(i), get<1>(i));
         }
 
-        cout << "size del vecchio vettore " << _old_dimensions.size() << endl;
+        cout << "2222222";
+
+        // cout << "size del vecchio vettore " << _old_dimensions.size() << endl;
 
         if(_old_dimensions.size() == 0){
+            cout << "sopra";
             assert(_strides.size() == b.size());
             return ((*_vec)[sum(mult(_strides, b))]);
         }else{
+            cout << "sotto";
             // In this case the tensor was flattened so i need to replace the flattened parts with the real ones
             std::vector<size_t> query;
             for(int i = 0; i<b.size(); ++i ){
@@ -110,9 +131,11 @@ public:
                 }
             }
             assert(_strides.size() == query.size());
-            return ((*_vec)[sum(mult(_strides, query))]);
+            assert(sum(mult(_strides, query)) < _vec.get()->size());
+            //////ERRRRRROOOOOOOOORE di sconfinamento QUIIIIIII
+            return (_vec.get()->at(sum(mult(_strides, query))));
         }
-
+        return -1;
     }
 
     Tensor<T> slice(size_t index, size_t value){
