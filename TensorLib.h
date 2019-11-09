@@ -88,7 +88,13 @@ public:
         for(auto i: _default){
             b.insert(b.begin() + get<0>(i), get<1>(i));
         }
-        return ((*_vec)[sum(mult(_strides, b))]);
+        if(_old_dimensions == nullptr){
+            return ((*_vec)[sum(mult(_strides, b))]);
+        }else{
+            // In this case the tensor was flattened so i need to replace the flattened parts with the real ones
+            
+        }
+
     }
 
     Tensor<T> slice(size_t index, size_t value){
