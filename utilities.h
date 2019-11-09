@@ -45,6 +45,15 @@ std::vector<T> mult(std::vector<T> a, std::vector<T> b){
 }
 
 template <class T>
+T mult(std::vector<T> a){
+    T tmp = 1;
+    for(auto i : a){
+        tmp *= i;
+    }
+    return tmp;
+}
+
+template <class T>
 T sum(std::vector<T> a){
     T tmp=0;
     for(auto i : a){

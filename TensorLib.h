@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <type_traits>
 #include "utilities.h"
+#include<cstdarg>
+
 
 using namespace std;
 
@@ -17,26 +19,39 @@ class Tensor {
 public:
     // when the rank is not specified
     Tensor<T>(std::initializer_list<size_t>&& a){
+        cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
         if (rank!=0){
-            // assert(a.size()==rank);
+            assert(a.size()==rank);
         }
         _width = a;
         _strides = cummult<size_t>(_width,1);
-        /*for(auto i : _strides){
-            cout << "mie strides:" << i << endl;
-        }*/
         _rank = a.size();
         _size = cummult(_width)[0];
     }
 
-    explicit Tensor<T>(const std::vector<size_t> a){
+    // when the rank is specified
+    Tensor<T>(const std::vector<size_t>& a){
+        cout << "costruttore : Tensor<T>(std::vector<size_t>& a)" << endl;
         if (rank!=0){
-            // assert(a.size()==rank);
+            assert(a.size()==rank);
         }
         _width = a;
         _strides = cummult<size_t>(_width,1);
         _rank = a.size();
         _size = cummult(_width)[0];
+    }
+
+    // move constructor
+    Tensor<T>(Tensor<T>&& a){
+        cout << "costruttore : Tensor<T>(Tensor<T>&& a)" << endl;
+        if (rank!=0){
+            assert(a._rank==rank);
+        }
+        _width = a._width;
+        _strides = a._strides;
+        _rank = a._rank;
+        _size = a._size;
+        _vec = a._vec;
     }
 
     // initialize with an array that will be represented as a tensor
@@ -80,6 +95,7 @@ public:
         // have to check if there's another one index equal to mine, in this case i've to increase mine
         // why do i have to increase and not to decrease? Because im working in a subset and for example if i take out the second and again the second then the third(the second second) is the third!
         if (_default.size() != 0){
+            cout << "Ho notato che hai fatto slicing a catena su un vettore, questa feature non è ancora testata!!";
             for(auto j : _default){
                 for(auto i: _default){
                     if(index == get<0>(i)){
@@ -96,6 +112,27 @@ public:
         return result;
     }
 
+    Tensor<T> flatten(size_t start, size_t stop){
+        std::vector<size_t> new_width;
+        size_t tmp=1;
+        for(int i=0;i<_width.size();++i){
+            if(i>stop){
+                new_width.push_back(tmp);
+            }
+            if (i<start || i>stop){
+                new_width.push_back(_width[i]);
+            }else{
+                tmp*=_width[i];
+            }
+        }
+        Tensor<T> result = Tensor<T>(new_width);
+        if(result._old_dimensions == nullptr){
+            //because if i repeat flattening 2 times on the same vector i dont need to replace many times the dimensions, the real vector is only the really first one
+            result._old_dimensions = _width;
+        }
+        return result;
+    }
+
 private:
 
     size_t _rank=0;
@@ -103,6 +140,7 @@ private:
 
     // when you do slicing then there is an index that it is defaulted
     std::vector<tuple<size_t, size_t>> _default;
+    std::vector<size_t> _old_dimensions;
 
     std::shared_ptr<std::vector<T>> _vec;
     std::vector<size_t> _strides;
