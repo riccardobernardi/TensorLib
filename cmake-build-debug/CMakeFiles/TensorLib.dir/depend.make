@@ -4,4 +4,5 @@
 CMakeFiles/TensorLib.dir/main.cpp.o: ../TensorLib.h
 CMakeFiles/TensorLib.dir/main.cpp.o: ../TestLib.h
 CMakeFiles/TensorLib.dir/main.cpp.o: ../main.cpp
+CMakeFiles/TensorLib.dir/main.cpp.o: ../utilities.h
 

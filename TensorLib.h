@@ -8,53 +8,9 @@
 #include <vector>
 #include <algorithm>
 #include <type_traits>
+#include "utilities.h"
 
 using namespace std;
-
-template<class T>
-static std::vector<T> cummult(std::vector<T> a, size_t span=0){
-    std::reverse(a.begin(),a.end());
-
-    std::vector<T> b;
-    for(int j=0; j<a.size();++j){
-        int tmp = 1;
-        for(int i=0; i< a.size()-j-span; ++i){
-            tmp = tmp*a[i+j];
-        }
-        b.push_back(tmp);
-    }
-    b[b.size()-1] = 1;
-
-
-    return b;
-}
-
-std::vector<size_t> erase(std::vector<size_t> a, size_t index){
-    std::vector<size_t> b;
-    for(int i = 0; i< a.size(); ++i){
-        if (i!=index){
-            b.push_back(a[i]);
-        }
-    }
-    return b;
-}
-
-std::vector<size_t> mult(std::vector<size_t> a, std::vector<size_t> b){
-    assert(a.size() == b.size());
-    std::vector<size_t> c;
-    for(int i =0; i< a.size(); ++i){
-        c.push_back(a[i]*b[i]);
-    }
-    return c;
-}
-
-size_t sum(std::vector<size_t> a){
-    size_t tmp=0;
-    for(auto i : a){
-        tmp += i;
-    }
-    return tmp;
-}
 
 template<class T = int, size_t rank=0>
 class Tensor {
@@ -65,7 +21,7 @@ public:
             // assert(a.size()==rank);
         }
         _width = a;
-        _strides = cummult(_width,1);
+        _strides = cummult<size_t>(_width,1);
         /*for(auto i : _strides){
             cout << "mie strides:" << i << endl;
         }*/
@@ -78,7 +34,7 @@ public:
             // assert(a.size()==rank);
         }
         _width = a;
-        _strides = cummult(_width,1);
+        _strides = cummult<size_t>(_width,1);
         _rank = a.size();
         _size = cummult(_width)[0];
     }
@@ -127,7 +83,7 @@ public:
             for(auto j : _default){
                 for(auto i: _default){
                     if(index == get<0>(i)){
-                        i++;
+                        index++;
                     }
                 }
             }
