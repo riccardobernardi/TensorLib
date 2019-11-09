@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <type_traits>
 
 using namespace std;
 
@@ -38,6 +39,23 @@ std::vector<size_t> erase(std::vector<size_t> a, size_t index){
     return b;
 }
 
+std::vector<size_t> mult(std::vector<size_t> a, std::vector<size_t> b){
+    assert(a.size() == b.size());
+    std::vector<size_t> c;
+    for(int i =0; i< a.size(); ++i){
+        c.push_back(a[i]*b[i]);
+    }
+    return c;
+}
+
+size_t sum(std::vector<size_t> a){
+    size_t tmp=0;
+    for(auto i : a){
+        tmp += i;
+    }
+    return tmp;
+}
+
 template<class T = int, size_t rank=0>
 class Tensor {
 public:
@@ -57,7 +75,7 @@ public:
         //cout << to_string(_rank) << endl;
     }
 
-    explicit Tensor<T>(const std::vector<size_t>& a){
+    explicit Tensor<T>(const std::vector<size_t> a){
         if (rank!=0){
             // assert(a.size()==rank);
         }
@@ -72,7 +90,7 @@ public:
     // initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
         assert(a.size() == _size);
-        _vec = make_shared<T>(a);
+        _vec = make_shared<std::vector<T>>(a);
     }
 
     void print_width(){
@@ -92,35 +110,53 @@ public:
     Tensor<T> slice(size_t index, size_t value){
         std::vector<size_t> new_width = erase(_width, value);
         Tensor<T> result = Tensor<T>(new_width);
+        //cout << result.print_privates();
         cout << "strides " << _strides[index] << endl;
-        result._start = index * _strides[index];
-        result._stop = result._start + _strides[index];
-        result._off = _strides[index] ;
+        result._default.push_back(tuple<size_t, size_t>(index, value));
+
         return result;
     }
 
-    Tensor<T> operator()(initializer_list<size_t> a){
-
+    size_t operator()(initializer_list<size_t> a){
+        cout << "vettore prima" << endl;
+        std::vector<size_t> b=a;
+        for(auto i : b){
+            cout << i << " ";
+        }
+        cout << endl;
+        cout << "vettore dopo" << endl;
+        cout << "size della _default : " << _default.size() << endl;
+        //cout << "tento l inserimento manuale";
+        //cout << "valore strano: " << get<0>(_default[0]);
+        //b.insert(b.begin() + get<0>(_default[0]), get<1>(_default[0]));
+        //cout << "finito inserimento manuale";
+        for(auto i: _default){
+            cout << "inserisco";
+            b.insert(b.begin() + get<0>(i), get<1>(i));
+        }
+        for(auto i : b){
+            cout << i << " ";
+        }
+        cout << endl;
+        cout << "indice puntato : " << sum(mult(_strides, b)) << endl;
+        cout << "result " << (*_vec)[sum(mult(_strides, b))] << endl;
+        return ((*_vec)[sum(mult(_strides, b))]);
     }
 
     void print_privates(){
         cout << "private " << "_rank " << _rank << endl;
         cout << "private " << "_size " << _size << endl;
-        cout << "private " << "_start " << _start << endl;
-        cout << "private " << "_off " << _off << endl;
-        cout << "private " << "_stop " << _stop << endl;
+        for(auto i : _default){
+            cout << "_default is " << get<0>(i) << " " << get<1>(i);
+        }
     }
 
 private:
     size_t _rank=0;
     size_t _size=0;
 
-    //start della parte lineare del tensore
-    size_t _start=0;
-    // salto per trovare l altra parte lineare del tensore
-    size_t _off=0;
-    //stop della parte lineare del tensore
-    size_t _stop=0;
+    // when you do slicing then there is an index that it is defaulted
+    std::vector<tuple<size_t, size_t>> _default;
 
     std::shared_ptr<std::vector<T>> _vec;
     std::vector<size_t> _strides;

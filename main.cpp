@@ -76,6 +76,23 @@ void test_slice_values00_comples_printed(){
     b.print_privates();
 }
 
+void test_slice_access(){
+    auto NAME = "test_slice_values";
+    Tensor<int> a = Tensor<int>({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    Tensor<int> b = a.slice(0,0);
+    // cout << b.print_strides();
+    // cout << b.print_privates();
+    cout << a({0,0,1});
+}
+
+void test_access(){
+    auto NAME = "test_slice_values";
+    Tensor<int> a = Tensor<int>({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    cout << a({0,0,0,1});
+}
+
 int main() {
 
     Test t;
@@ -88,6 +105,8 @@ int main() {
     t.add(test_slice_values00,"test_slice_values00" );
     t.add(test_correct_widths, "test_correct_widths");
     t.add(test_slice_values00_comples_printed,"test_slice_values00_comples_printed");
+    t.add(test_access,"test_access");
+    t.add(test_slice_access,"test_slice_access");
     t.launch_test(-1);
 
 }
