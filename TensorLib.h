@@ -107,14 +107,12 @@ public:
         cout << "*******" << endl;
     }
 
-    Tensor<T> slice(size_t index, size_t value){
-        std::vector<size_t> new_width = erase(_width, value);
-        Tensor<T> result = Tensor<T>(new_width);
-        //cout << result.print_privates();
-        cout << "strides " << _strides[index] << endl;
-        result._default.push_back(tuple<size_t, size_t>(index, value));
-
-        return result;
+    void print_privates(){
+        cout << "private " << "_rank " << _rank << endl;
+        cout << "private " << "_size " << _size << endl;
+        for(auto i : _default){
+            cout << "_default is " << get<0>(i) << " " << get<1>(i);
+        }
     }
 
     size_t operator()(initializer_list<size_t> a){
@@ -143,15 +141,18 @@ public:
         return ((*_vec)[sum(mult(_strides, b))]);
     }
 
-    void print_privates(){
-        cout << "private " << "_rank " << _rank << endl;
-        cout << "private " << "_size " << _size << endl;
-        for(auto i : _default){
-            cout << "_default is " << get<0>(i) << " " << get<1>(i);
-        }
+    Tensor<T> slice(size_t index, size_t value){
+        std::vector<size_t> new_width = erase(_width, value);
+        Tensor<T> result = Tensor<T>(new_width);
+        //cout << result.print_privates();
+        cout << "strides " << _strides[index] << endl;
+        result._default.push_back(tuple<size_t, size_t>(index, value));
+
+        return result;
     }
 
 private:
+
     size_t _rank=0;
     size_t _size=0;
 
@@ -162,6 +163,8 @@ private:
     std::vector<size_t> _strides;
     std::vector<size_t> _width;
 };
+
+
 
 
 
