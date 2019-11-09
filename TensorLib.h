@@ -121,6 +121,17 @@ public:
     }
 
     Tensor<T> slice(size_t index, size_t value){
+        // have to check if there's another one index equal to mine, in this case i've to increase mine
+        // why do i have to increase and not to decrease? Because im working in a subset and for example if i take out the second and again the second then the third(the second second) is the third!
+        if (_default.size() != 0){
+            for(auto j : _default){
+                for(auto i: _default){
+                    if(index == get<0>(i)){
+                        i++;
+                    }
+                }
+            }
+        }
         std::vector<size_t> new_width = erase(_width, index);
         Tensor<T> result = Tensor<T>(new_width);
         result._default.push_back(tuple<size_t, size_t>(index, value));
