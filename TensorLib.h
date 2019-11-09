@@ -139,20 +139,23 @@ public:
     Tensor<T> flatten(size_t start, size_t stop){
         std::vector<size_t> new_width;
         size_t tmp=1;
+        size_t flat=-1;
         for(int i=0;i<_width.size();++i){
-            if(i>stop){
-                new_width.push_back(tmp);
-                _flattened_dim = new_width.size();
-            }
             if (i<start || i>stop){
                 new_width.push_back(_width[i]);
             }else{
                 tmp*=_width[i];
+                if(i==stop){
+                    new_width.push_back(tmp);
+                    flat = new_width.size();
+                }
             }
         }
         Tensor<T> result = Tensor<T>(new_width);
+        result._flattened_dim = flat;
         result._old_dimensions = _old_dimensions.size() == 0?_width:_old_dimensions;
-        cout << "assegnazione del vettore delle vechchie dims " << result._old_dimensions.size() << endl;
+        //cout << "assegnazione del vettore delle vechchie dims " << result._old_dimensions.size() << endl;
+        result.print_privates();
         return result;
     }
 
