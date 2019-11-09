@@ -6,15 +6,18 @@
 #define TENSORLIB_TENSORLIB_H
 
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
 template<class T>
-static std::vector<T> cummult(std::vector<T> a){
+static std::vector<T> cummult(std::vector<T> a, size_t span=0){
+    std::reverse(a.begin(),a.end());
+
     std::vector<T> b;
     for(int j=0; j<a.size();++j){
         int tmp = 1;
-        for(int i=0; i< a.size()-j; ++i){
+        for(int i=0; i< a.size()-j-span; ++i){
             tmp = tmp*a[i+j];
         }
         b.push_back(tmp);
@@ -25,16 +28,41 @@ static std::vector<T> cummult(std::vector<T> a){
     return b;
 }
 
+std::vector<size_t> erase(std::vector<size_t> a, size_t index){
+    std::vector<size_t> b;
+    for(int i = 0; i< a.size(); ++i){
+        if (i!=index){
+            b.push_back(a[i]);
+        }
+    }
+    return b;
+}
+
 template<class T = int, size_t rank=0>
 class Tensor {
 public:
     // when the rank is not specified
-    Tensor<T,0>(std::initializer_list<size_t>&& a){
+    Tensor<T>(std::initializer_list<size_t>&& a){
         if (rank!=0){
-            assert(a.size()==rank);
+            // assert(a.size()==rank);
         }
         _width = a;
-        _strides = cummult(_width);
+        _strides = cummult(_width,1);
+        for(auto i : _strides){
+            cout << "mie strides:" << i << endl;
+        }
+        _rank = a.size();
+        _size = cummult(_width)[0];
+        cout << "size: " << _size << endl;
+        //cout << to_string(_rank) << endl;
+    }
+
+    explicit Tensor<T>(const std::vector<size_t>& a){
+        if (rank!=0){
+            // assert(a.size()==rank);
+        }
+        _width = a;
+        _strides = cummult(_width,1);
         _rank = a.size();
         _size = cummult(_width)[0];
         cout << "size: " << _size << endl;
@@ -44,6 +72,7 @@ public:
     // initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
         assert(a.size() == _size);
+        _vec = make_shared<T>(a);
     }
 
     void print_width(){
@@ -60,24 +89,39 @@ public:
         cout << "*******" << endl;
     }
 
-    void slice(size_t start, size_t increment){
-        std::vector<size_t> b;
-        //b.push_back(start*_width[start]);
-        // cout << _size << endl;
-        cout << start*_width[start] << "***" << endl;
+    Tensor<T> slice(size_t index, size_t value){
+        std::vector<size_t> new_width = erase(_width, value);
+        Tensor<T> result = Tensor<T>(new_width);
+        cout << "strides " << _strides[index] << endl;
+        result._start = index * _strides[index];
+        result._stop = result._start + _strides[index];
+        result._off = _strides[index] ;
+        return result;
+    }
 
-        // cout << _size/_width[start] << endl;
-        for(int i=0; i<(_size - (start*_width[start]==0?1:start*_width[start])) -1; ++i){
-            cout << "ghesbo" << i;
-            // size_t index = start*_width[start] + int((start*_width[start]==0?1:start*_width[start]) / (_size)/start);
-            cout << start*_width[start] + (_size - (start*_width[start]==0?1:start*_width[start]) -1);
-            // b.push_back(index);
-        }
+    Tensor<T> operator()(initializer_list<size_t> a){
+
+    }
+
+    void print_privates(){
+        cout << "private " << "_rank " << _rank << endl;
+        cout << "private " << "_size " << _size << endl;
+        cout << "private " << "_start " << _start << endl;
+        cout << "private " << "_off " << _off << endl;
+        cout << "private " << "_stop " << _stop << endl;
     }
 
 private:
     size_t _rank=0;
     size_t _size=0;
+
+    //start della parte lineare del tensore
+    size_t _start=0;
+    // salto per trovare l altra parte lineare del tensore
+    size_t _off=0;
+    //stop della parte lineare del tensore
+    size_t _stop=0;
+
     std::shared_ptr<std::vector<T>> _vec;
     std::vector<size_t> _strides;
     std::vector<size_t> _width;
