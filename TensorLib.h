@@ -78,6 +78,8 @@ public:
         cout << "private " << "_rank " << _rank << endl;
         cout << "private " << "_size " << _size << endl;
         cout << "private " << "size del _default " << _default.size() << endl;
+        cout << "private " << "size del _old_dimensions " << _old_dimensions.size() << endl;
+        cout << "private " << "flattened dimensions " << _flattened_dim << endl;
         for(auto i : _default){
             cout << "_default is " << get<0>(i) << " " << get<1>(i) << endl;
         }
@@ -88,11 +90,27 @@ public:
         for(auto i: _default){
             b.insert(b.begin() + get<0>(i), get<1>(i));
         }
-        if(_old_dimensions == nullptr){
+
+        cout << "size del vecchio vettore " << _old_dimensions.size() << endl;
+
+        if(_old_dimensions.size() == 0){
+            assert(_strides.size() == b.size());
             return ((*_vec)[sum(mult(_strides, b))]);
         }else{
             // In this case the tensor was flattened so i need to replace the flattened parts with the real ones
-            
+            std::vector<size_t> query;
+            for(int i = 0; i<b.size(); ++i ){
+                if(i == _flattened_dim){
+                    query.push_back(b[i]);
+                }else{
+                    // this is the case in which we found the dimension to be substituted
+                    for(int j = 0; j < _old_dimensions.size() - b.size(); ++j){
+                        query.push_back(b[i] % _old_dimensions[i+j]);
+                    }
+                }
+            }
+            assert(_strides.size() == query.size());
+            return ((*_vec)[sum(mult(_strides, query))]);
         }
 
     }
@@ -124,6 +142,7 @@ public:
         for(int i=0;i<_width.size();++i){
             if(i>stop){
                 new_width.push_back(tmp);
+                _flattened_dim = new_width.size();
             }
             if (i<start || i>stop){
                 new_width.push_back(_width[i]);
@@ -132,10 +151,8 @@ public:
             }
         }
         Tensor<T> result = Tensor<T>(new_width);
-        if(result._old_dimensions == nullptr){
-            //because if i repeat flattening 2 times on the same vector i dont need to replace many times the dimensions, the real vector is only the really first one
-            result._old_dimensions = _width;
-        }
+        result._old_dimensions = _old_dimensions.size() == 0?_width:_old_dimensions;
+        cout << "assegnazione del vettore delle vechchie dims " << result._old_dimensions.size() << endl;
         return result;
     }
 
@@ -147,6 +164,7 @@ private:
     // when you do slicing then there is an index that it is defaulted
     std::vector<tuple<size_t, size_t>> _default;
     std::vector<size_t> _old_dimensions;
+    size_t _flattened_dim=-1;
 
     std::shared_ptr<std::vector<T>> _vec;
     std::vector<size_t> _strides;

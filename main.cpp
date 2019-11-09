@@ -89,14 +89,14 @@ void test_access(){
     cout << a({0,0,0,1});
 }
 
-void test_torsello1(){
+/*void test_torsello1(){
     std::string s1("Hello");
     std::string s2(" ");
     std::string s3("World!\n");
     const std::string &s = s1 + s2 + s3; std::cout << s; // OK?
-}
+}*/
 
-class test_torsello2c{
+/*class test_torsello2c{
     static const std::string &getString() {
         return std::string ("Hello");
     }
@@ -112,12 +112,16 @@ void test_torsello2(){
     }catch(...){
         cout << "failed because object returned is temporary and do it's deleted as returns";
     }
-}
+}*/
 
-void test_side_effect_of_vector_reference(){
-    Tensor<int> a = Tensor<int>(vector<size_t>(2,3,2,3));
+void test_flattening(){
+    Tensor<int> a = Tensor<int>({2,3,2,3});
     a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
-    cout << a({0,0,0,1});
+    a.flatten(0,1);
+    cout << "vvvvvvvvvvvvvvvvvvvvvv" << endl;
+    a.print_privates();
+    cout << "^^^^^^^^^^^^^^^^^^^^^^" << endl;
+    cout << a({5,0,1});
 }
 
 int main() {
@@ -135,8 +139,9 @@ int main() {
     t.add(test_access,"test_access");
     t.add(test_slice_access,"test_slice_access");
     t.add(test_slice_access_more_complex,"test_slice_access_more_complex");
-    t.add(test_torsello1, "test_torsello1");
+    // t.add(test_torsello1, "test_torsello1");
     // t.add(test_torsello2,"test_torsello2"); // bloccato perchè genera errore giustamente
+    t.add(test_flattening,"test_flattening");
     t.launch_test(-1);
 
 }
