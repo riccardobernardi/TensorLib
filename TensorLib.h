@@ -66,13 +66,11 @@ public:
         }
         _width = a;
         _strides = cummult(_width,1);
-        for(auto i : _strides){
+        /*for(auto i : _strides){
             cout << "mie strides:" << i << endl;
-        }
+        }*/
         _rank = a.size();
         _size = cummult(_width)[0];
-        cout << "size: " << _size << endl;
-        //cout << to_string(_rank) << endl;
     }
 
     explicit Tensor<T>(const std::vector<size_t> a){
@@ -83,8 +81,6 @@ public:
         _strides = cummult(_width,1);
         _rank = a.size();
         _size = cummult(_width)[0];
-        cout << "size: " << _size << endl;
-        //cout << to_string(_rank) << endl;
     }
 
     // initialize with an array that will be represented as a tensor
@@ -110,44 +106,26 @@ public:
     void print_privates(){
         cout << "private " << "_rank " << _rank << endl;
         cout << "private " << "_size " << _size << endl;
+        cout << "private " << "size del _default " << _default.size() << endl;
         for(auto i : _default){
-            cout << "_default is " << get<0>(i) << " " << get<1>(i);
+            cout << "_default is " << get<0>(i) << " " << get<1>(i) << endl;
         }
     }
 
     size_t operator()(initializer_list<size_t> a){
-        cout << "vettore prima" << endl;
         std::vector<size_t> b=a;
-        for(auto i : b){
-            cout << i << " ";
-        }
-        cout << endl;
-        cout << "vettore dopo" << endl;
-        cout << "size della _default : " << _default.size() << endl;
-        //cout << "tento l inserimento manuale";
-        //cout << "valore strano: " << get<0>(_default[0]);
-        //b.insert(b.begin() + get<0>(_default[0]), get<1>(_default[0]));
-        //cout << "finito inserimento manuale";
         for(auto i: _default){
-            cout << "inserisco";
             b.insert(b.begin() + get<0>(i), get<1>(i));
         }
-        for(auto i : b){
-            cout << i << " ";
-        }
-        cout << endl;
-        cout << "indice puntato : " << sum(mult(_strides, b)) << endl;
-        cout << "result " << (*_vec)[sum(mult(_strides, b))] << endl;
         return ((*_vec)[sum(mult(_strides, b))]);
     }
 
     Tensor<T> slice(size_t index, size_t value){
-        std::vector<size_t> new_width = erase(_width, value);
+        std::vector<size_t> new_width = erase(_width, index);
         Tensor<T> result = Tensor<T>(new_width);
-        //cout << result.print_privates();
-        cout << "strides " << _strides[index] << endl;
         result._default.push_back(tuple<size_t, size_t>(index, value));
-
+        result._strides = _strides;
+        result._vec = _vec;
         return result;
     }
 
