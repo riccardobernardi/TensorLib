@@ -69,7 +69,12 @@ public:
     // initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
         assert(a.size() == _size);
-        _vec = make_shared<std::vector<T>>(a);
+        // assert(_vec.get() == nullptr);
+        if (_vec.get() == nullptr){
+            _vec = make_shared<std::vector<T>>(a);
+        }else{
+            cout << "Una volta inizializzato il vettore non può essere modificato!" << endl;
+        }
         // cout << "operazione pericolosa" << endl;
         // cout << "controlliamo che il vettore sia correttamente istanziato" << _vec.get()->at(0) << endl;
     }
