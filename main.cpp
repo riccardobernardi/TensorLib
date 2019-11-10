@@ -119,11 +119,13 @@ void test_flattening(){
     a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
     // cout << "anche qui un operazione che crea errori1111" << endl;
     Tensor<int> b = a.flatten(0,1);
+    // cout << "controlliamo il flat del tensore dopo il flattening: " << b._flattened_dim << endl;
     // cout << "anche qui un operazione che crea errori22222" << endl;
 
-    // b.print_privates();
+    b.print_privates();
 
-    cout << "il mio valore  di controllo è: " << a({0,0,0,1}) << endl;
+    int d = a({0,0,0,1});
+    cout << "il mio valore  di controllo è: " << d << endl;
 
     // cout << "sto per fare una difficile operazione" << endl;
 
@@ -144,7 +146,31 @@ void test_flattening_complex(){
 
     // cout << "sto per fare una difficile operazione" << endl;
 
-    int c = b({5,0,1});
+    int c = b({5,1,0});
+    cout << "il mio valore è: " << c << endl;
+}
+
+void test_check_consistent_initialization(){
+    Tensor<int> a = Tensor<int>({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+}
+
+void test_flattening_complex_quasi_full(){
+    Tensor<int> a = Tensor<int>({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    // cout << "anche qui un operazione che crea errori1111" << endl;
+    Tensor<int> b = a.flatten(0,2);
+    // cout << "anche qui un operazione che crea errori22222" << endl;
+
+    // b.print_privates();
+
+    int d = a({1,2,1,0});
+    cout << "il mio valore  di controllo è: " << d << endl;
+
+    // cout << "sto per fare una difficile operazione" << endl;
+
+    int c = b({11,0});
     cout << "il mio valore è: " << c << endl;
 }
 
@@ -157,18 +183,13 @@ void test_flattening_complex_full(){
 
     // b.print_privates();
 
-    cout << "il mio valore  di controllo è: " << a({1,2,1,0}) << endl;
+    int d = a({1,2,1,0});
+    cout << "il mio valore  di controllo è: " << d << endl;
 
     // cout << "sto per fare una difficile operazione" << endl;
 
-    int c = b({33});
+    int c = b({11,0});
     cout << "il mio valore è: " << c << endl;
-}
-
-void test_check_consistent_initialization(){
-    Tensor<int> a = Tensor<int>({2,3,2,3});
-    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
-    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
 }
 
 int main() {
@@ -191,6 +212,7 @@ int main() {
     t.add(test_flattening,"test_flattening");
     t.add(test_flattening_complex,"test_flattening_complex");
     t.add(test_check_consistent_initialization, "test_check_consistent_initialization");
+    t.add(test_flattening_complex_quasi_full,"test_flattening_complex_quasi_full");
     t.add(test_flattening_complex_full,"test_flattening_complex_full");
     t.launch_test(-1);
 

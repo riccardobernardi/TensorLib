@@ -112,51 +112,49 @@ public:
     }*/
 
     T operator()(initializer_list<size_t> a){
-        // cout << "111111" << endl;
         std::vector<size_t> b=a;
         for(auto i: _default){
             b.insert(b.begin() + get<0>(i), get<1>(i));
         }
 
-        // cout << "2222222" << endl;
-
-        // cout << "size del vecchio vettore " << _old_dimensions.size() << endl;
-
         if(_old_dimensions.size() == 0){
-            // cout << "sopra" << endl;
             assert(_strides.size() == b.size());
-            // cout << "query request" << sum(mult(_strides, b)) << endl;
-            return (_vec.get()->at(sum(mult(_strides, b))));
         }else{
-            // cout << "sotto" << endl;
             // In this case the tensor was flattened so i need to replace the flattened parts with the real ones
             std::vector<size_t> query;
             for(int i = 0; i<b.size(); ++i ){
-                if(i == _flattened_dim){
+                if(i != _flattened_dim){
                     query.push_back(b[i]);
                 }else{
                     // this is the case in which we found the dimension to be substituted
-                    for(int j = 0; j < _old_dimensions.size() - b.size(); ++j){
+                    assert(_old_dimensions.size() - b.size() > 0);
+                    for(int j = 0; j <= _old_dimensions.size() - b.size(); ++j){
                         query.push_back(b[i] % _old_dimensions[i+j]);
+                        // cout << "aggiungo: " << b[i] % _old_dimensions[i+j] << endl;
                     }
                 }
             }
-            // assert(_strides.size() == query.size());
-            // assert(sum(mult(_strides, query)) < _vec.get()->size());
-            //////ERRRRRROOOOOOOOORE di sconfinamento QUIIIIIII
-            // cout << "my request of subscript " << sum(mult(_strides, query)) << endl;
-            return (_vec.get()->at(sum(mult(_strides, query))));
-            // return (_vec.get()->at(0));
-            // return _vec.get()->size();
+
+            /*cout << "dimension of strides: " << _strides.size() << endl;
+            cout << "dimension of query: " << query.size() << endl;
+            for (auto i : query){
+                cout << "my query value in query is : " << i << endl;
+            }
+
+            for (auto i : _strides){
+                cout << "my strides value in strides is : " << i << endl;
+            }*/
+
+            b = query;
         }
-        return -1;
+        return (_vec.get()->at(sum(mult(_strides, b))));
     }
 
     Tensor<T> slice(size_t index, size_t value){
         // have to check if there's another one index equal to mine, in this case i've to increase mine
         // why do i have to increase and not to decrease? Because im working in a subset and for example if i take out the second and again the second then the third(the second second) is the third!
         if (_default.size() != 0){
-            // cout << "Ho notato che hai fatto slicing a catena su un vettore, questa feature non è ancora testata!!";
+            cout << "Ho notato che hai fatto slicing a catena su un vettore, questa feature non è ancora testata!!";
             for(auto j : _default){
                 for(auto i: _default){
                     if(index == get<0>(i)){
@@ -174,9 +172,17 @@ public:
     }
 
     Tensor<T> flatten(size_t start, size_t stop){
+        if(stop - start == _rank - 1){
+            cout << "ATTENZIONE: stai tentando di passare da un tensore ad un array completamente lineare, devo ancora finire di implementare questa feature:)";
+        }
         std::vector<size_t> new_width;
         size_t tmp=1;
         size_t flat=-1;
+
+        /*for(auto i: _width){
+            cout << "vecchia dimensione" << i << endl;
+        }*/
+
         for(int i=0;i<_width.size();++i){
             if (i<start || i>stop){
                 new_width.push_back(_width[i]);
@@ -184,16 +190,24 @@ public:
                 tmp*=_width[i];
                 if(i==stop){
                     new_width.push_back(tmp);
-                    flat = new_width.size();
+                    flat = new_width.size() - 1;
                 }
             }
         }
+
+        /*for(auto i: new_width){
+            cout << "nuova dimensione" << i << endl;
+        }*/
+
         Tensor<T> result = Tensor<T>(new_width);
         result._flattened_dim = flat;
+        // cout << "dopo aver fatto il flat lo segno nel nuovo tensore come: " << result._flattened_dim << endl;
         result._old_dimensions = _old_dimensions.size() == 0?_width:_old_dimensions;
         result._vec = _vec;
+        // TO_DO: devo mettere lo stesso controllo che c'è anche su old_dimensions perchè se faccio doppio flatten si sminchia
+        result._strides = _strides;
         //cout << "assegnazione del vettore delle vechchie dims " << result._old_dimensions.size() << endl;
-        result.print_privates();
+        // result.print_privates();
         return result;
     }
 
@@ -201,11 +215,11 @@ private:
 
     size_t _rank=0;
     size_t _size=0;
+    size_t _flattened_dim=-1000;
 
     // when you do slicing then there is an index that it is defaulted
     std::vector<tuple<size_t, size_t>> _default;
     std::vector<size_t> _old_dimensions;
-    size_t _flattened_dim=-1;
 
     std::shared_ptr<std::vector<T>> _vec;
     std::vector<size_t> _strides;
