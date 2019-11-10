@@ -153,7 +153,13 @@ void test_flattening_complex(){
 void test_check_consistent_initialization(){
     Tensor<int> a = Tensor<int>({2,3,2,3});
     a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    a.initialize({0});
+}
+
+void test_check_consistent_initialization_with_permitted_reinit(){
+    Tensor<int> a = Tensor<int>({2,3,2,3});
     a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    a.initialize({15550,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
 }
 
 void test_flattening_complex_quasi_full(){
@@ -192,6 +198,14 @@ void test_flattening_complex_full(){
     cout << "il mio valore è: " << c << endl;
 }
 
+void test_iterations(){
+    Tensor<int> a = Tensor<int>({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    for(auto i: a){
+        cout << i << endl;
+    }
+}
+
 int main() {
 
     Test t;
@@ -214,6 +228,8 @@ int main() {
     t.add(test_check_consistent_initialization, "test_check_consistent_initialization");
     t.add(test_flattening_complex_quasi_full,"test_flattening_complex_quasi_full");
     t.add(test_flattening_complex_full,"test_flattening_complex_full");
+    t.add(test_iterations,"test_iterations");
+    t.add(test_check_consistent_initialization_with_permitted_reinit,"test_check_consistent_initialization_with_permitted_reinit");
     t.launch_test(-1);
 
 }

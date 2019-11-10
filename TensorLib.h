@@ -68,12 +68,13 @@ public:
 
     // initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
-        assert(a.size() == _size);
-        // assert(_vec.get() == nullptr);
-        if (_vec.get() == nullptr){
+        // assert(a.size() == _size);
+        // questo controllo serve perchè il vettore dev'essere immutable una volta creato per la prima volta
+        // assert( (_vec.get() == nullptr) || (a.size() == _vec.get()->size()) );
+        if ( (_vec.get() == nullptr) || (a.size() == _vec.get()->size()) ){
             _vec = make_shared<std::vector<T>>(a);
         }else{
-            cout << "Una volta inizializzato il vettore non può essere modificato!" << endl;
+            cout << "Una volta inizializzato il vettore non può essere modificato nelle dimensioni!" << endl;
         }
         // cout << "operazione pericolosa" << endl;
         // cout << "controlliamo che il vettore sia correttamente istanziato" << _vec.get()->at(0) << endl;
@@ -209,6 +210,22 @@ public:
         //cout << "assegnazione del vettore delle vechchie dims " << result._old_dimensions.size() << endl;
         // result.print_privates();
         return result;
+    }
+
+    inline typename std::vector<T>::iterator begin() noexcept {
+        return _vec.get()->begin();
+    }
+
+    inline typename std::vector<T>::iterator end() noexcept {
+        return _vec.get()->end();
+    }
+
+    inline typename std::vector<T>::const_iterator cbegin() noexcept {
+        return _vec.get()->cbegin();
+    }
+
+    inline typename std::vector<T>::const_iterator cend() noexcept {
+        return _vec.get()->cend();
     }
 
 private:

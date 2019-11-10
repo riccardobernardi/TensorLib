@@ -15,20 +15,22 @@ public:
         if(x == -1){
             for(unsigned long i=0; i<_functions.size();++i){
                 try {
-                    cout << "--------------------------------------" << endl;
+                    cout << "vvvv---------------TEST " << i << "-----------------------vvvv" << endl;
                     _functions[i]();
-                    cout<< endl << "concluso test "<< _names[i] <<endl;
+                    cout<< endl << "***Concluso test ["<< _names[i] << "]" <<endl;
+                    cout << "^^^^---------------TEST " << i << "-----------------------^^^^" << endl;
                 }catch(...) {
-                    cout << "Errore al test "<< _names[i] <<endl;
+                    cout << "***Errore al test ["<< _names[x] << "]" <<endl;
                 }
             }
         }else{
             try {
-                cout << "--------------------------------------" << endl;
+                cout << "VVVV---------------TEST " << x << "-----------------------VVVV" << endl;
                 _functions[x]();
-                cout<< endl << "concluso test "<< _names[x] <<endl;
+                cout<< endl << "***Concluso test ["<< _names[x] << "]" <<endl;
+                cout << "^^^^---------------TEST " << x << "-----------------------^^^^" << endl;
             }catch(...) {
-                cout << "Errore al test "<< _names[x] <<endl;
+                cout << "***Errore al test ["<< _names[x] << "]" <<endl;
             }
         }
 
