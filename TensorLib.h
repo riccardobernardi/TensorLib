@@ -19,7 +19,7 @@ class Tensor {
 public:
     // when the rank is not specified
     Tensor<T>(std::initializer_list<size_t>&& a){
-        cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
+        // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
         if (rank!=0){
             assert(a.size()==rank);
         }
@@ -31,7 +31,7 @@ public:
 
     // when the rank is specified
     Tensor<T>(const std::vector<size_t>& a){
-        cout << "costruttore : Tensor<T>(std::vector<size_t>& a)" << endl;
+        // cout << "costruttore : Tensor<T>(std::vector<size_t>& a)" << endl;
         if (rank!=0){
             assert(a.size()==rank);
         }
@@ -43,7 +43,7 @@ public:
 
     // move constructor
     Tensor<T>(Tensor<T>&& a){
-        cout << "costruttore : Tensor<T>(Tensor<T>&& a)" << endl;
+        // cout << "costruttore : Tensor<T>(Tensor<T>&& a)" << endl;
         if (rank!=0){
             assert(a._rank==rank);
         }
@@ -55,7 +55,7 @@ public:
     }
 
     Tensor<T>(Tensor<T>& a){
-        cout << "costruttore : Tensor<T>(Tensor<T>& a)" << endl;
+        // cout << "costruttore : Tensor<T>(Tensor<T>& a)" << endl;
         if (rank!=0){
             assert(a._rank==rank);
         }
@@ -70,6 +70,8 @@ public:
     void initialize(std::initializer_list<T>&& a){
         assert(a.size() == _size);
         _vec = make_shared<std::vector<T>>(a);
+        // cout << "operazione pericolosa" << endl;
+        // cout << "controlliamo che il vettore sia correttamente istanziato" << _vec.get()->at(0) << endl;
     }
 
     void print_width(){
@@ -87,37 +89,41 @@ public:
     }
 
     void print_privates(){
+        cout << "vvvvvvvvvvvvvvvvvvvvvv" << endl;
         cout << "private " << "_rank " << _rank << endl;
         cout << "private " << "_size " << _size << endl;
+        cout << "private size del vettore " << _vec.get()->size() << endl;
         cout << "private " << "size del _default " << _default.size() << endl;
         cout << "private " << "size del _old_dimensions " << _old_dimensions.size() << endl;
         cout << "private " << "flattened dimensions " << _flattened_dim << endl;
         for(auto i : _default){
             cout << "_default is " << get<0>(i) << " " << get<1>(i) << endl;
         }
+        cout << "^^^^^^^^^^^^^^^^^^^^^^" << endl;
     }
 
     /*Tensor<T> operator=(Tensor<T>&& a){
         return Tensor<T>(a);
     }*/
 
-    size_t operator()(initializer_list<size_t> a){
-        cout << "111111";
+    T operator()(initializer_list<size_t> a){
+        // cout << "111111" << endl;
         std::vector<size_t> b=a;
         for(auto i: _default){
             b.insert(b.begin() + get<0>(i), get<1>(i));
         }
 
-        cout << "2222222";
+        // cout << "2222222" << endl;
 
         // cout << "size del vecchio vettore " << _old_dimensions.size() << endl;
 
         if(_old_dimensions.size() == 0){
-            cout << "sopra";
+            // cout << "sopra" << endl;
             assert(_strides.size() == b.size());
-            return ((*_vec)[sum(mult(_strides, b))]);
+            // cout << "query request" << sum(mult(_strides, b)) << endl;
+            return (_vec.get()->at(sum(mult(_strides, b))));
         }else{
-            cout << "sotto";
+            // cout << "sotto" << endl;
             // In this case the tensor was flattened so i need to replace the flattened parts with the real ones
             std::vector<size_t> query;
             for(int i = 0; i<b.size(); ++i ){
@@ -130,10 +136,13 @@ public:
                     }
                 }
             }
-            assert(_strides.size() == query.size());
-            assert(sum(mult(_strides, query)) < _vec.get()->size());
+            // assert(_strides.size() == query.size());
+            // assert(sum(mult(_strides, query)) < _vec.get()->size());
             //////ERRRRRROOOOOOOOORE di sconfinamento QUIIIIIII
+            // cout << "my request of subscript " << sum(mult(_strides, query)) << endl;
             return (_vec.get()->at(sum(mult(_strides, query))));
+            // return (_vec.get()->at(0));
+            // return _vec.get()->size();
         }
         return -1;
     }
@@ -142,7 +151,7 @@ public:
         // have to check if there's another one index equal to mine, in this case i've to increase mine
         // why do i have to increase and not to decrease? Because im working in a subset and for example if i take out the second and again the second then the third(the second second) is the third!
         if (_default.size() != 0){
-            cout << "Ho notato che hai fatto slicing a catena su un vettore, questa feature non è ancora testata!!";
+            // cout << "Ho notato che hai fatto slicing a catena su un vettore, questa feature non è ancora testata!!";
             for(auto j : _default){
                 for(auto i: _default){
                     if(index == get<0>(i)){
@@ -177,6 +186,7 @@ public:
         Tensor<T> result = Tensor<T>(new_width);
         result._flattened_dim = flat;
         result._old_dimensions = _old_dimensions.size() == 0?_width:_old_dimensions;
+        result._vec = _vec;
         //cout << "assegnazione del vettore delle vechchie dims " << result._old_dimensions.size() << endl;
         result.print_privates();
         return result;

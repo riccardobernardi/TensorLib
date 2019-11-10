@@ -56,14 +56,14 @@ void test_slice_values00(){
 
 void test_correct_widths(){
     Tensor<int> a = Tensor<int>({2,2,2});
-    a.print_width();
-    a.print_strides();
+    // a.print_width();
+    // a.print_strides();
 }
 
 void test_slice_values00_comples_printed(){
     Tensor<int> a = Tensor<int>({2,3,2,3});
     Tensor<int> b = a.slice(0,0);
-    b.print_privates();
+    // b.print_privates();
 }
 
 void test_slice_access(){
@@ -117,12 +117,52 @@ void test_torsello2(){
 void test_flattening(){
     Tensor<int> a = Tensor<int>({2,3,2,3});
     a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    // cout << "anche qui un operazione che crea errori1111" << endl;
     Tensor<int> b = a.flatten(0,1);
-    cout << "vvvvvvvvvvvvvvvvvvvvvv" << endl;
-    b.print_privates();
-    cout << "^^^^^^^^^^^^^^^^^^^^^^" << endl;
+    // cout << "anche qui un operazione che crea errori22222" << endl;
 
-    cout << "il mio valore è: " << b({5,0,1});
+    // b.print_privates();
+
+    cout << "il mio valore  di controllo è: " << a({0,0,0,1}) << endl;
+
+    // cout << "sto per fare una difficile operazione" << endl;
+
+    int c = b({0,0,1});
+    cout << "il mio valore è: " << c << endl;
+}
+
+void test_flattening_complex(){
+    Tensor<int> a = Tensor<int>({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    // cout << "anche qui un operazione che crea errori1111" << endl;
+    Tensor<int> b = a.flatten(0,1);
+    // cout << "anche qui un operazione che crea errori22222" << endl;
+
+    // b.print_privates();
+
+    cout << "il mio valore  di controllo è: " << a({1,2,1,0}) << endl;
+
+    // cout << "sto per fare una difficile operazione" << endl;
+
+    int c = b({5,0,1});
+    cout << "il mio valore è: " << c << endl;
+}
+
+void test_flattening_complex_full(){
+    Tensor<int> a = Tensor<int>({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    // cout << "anche qui un operazione che crea errori1111" << endl;
+    Tensor<int> b = a.flatten(0,3);
+    // cout << "anche qui un operazione che crea errori22222" << endl;
+
+    // b.print_privates();
+
+    cout << "il mio valore  di controllo è: " << a({1,2,1,0}) << endl;
+
+    // cout << "sto per fare una difficile operazione" << endl;
+
+    int c = b({33});
+    cout << "il mio valore è: " << c << endl;
 }
 
 int main() {
@@ -143,6 +183,8 @@ int main() {
     // t.add(test_torsello1, "test_torsello1");
     // t.add(test_torsello2,"test_torsello2"); // bloccato perchè genera errore giustamente
     t.add(test_flattening,"test_flattening");
+    t.add(test_flattening_complex,"test_flattening_complex");
+    t.add(test_flattening_complex_full,"test_flattening_complex_full");
     t.launch_test(-1);
 
 }
