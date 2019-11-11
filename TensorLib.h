@@ -37,22 +37,8 @@ public:
         strides = cummult<size_t>(widths,1);
     }
 
-    // move constructor
-    Tensor<T>(Tensor<T>&& a){
-        widths = a.widths;
-        strides = a.strides;
-        data = a.data;
-    }
-
     // copy constructor
-    Tensor<T>(Tensor<T>& a){
-        widths = a.widths;
-        strides = a.strides;
-        data = a.data;
-    }
-
-    // copy constructor
-    Tensor<T>(Tensor<T> a){
+    Tensor<T>(const Tensor<T>& a){
         widths = a.widths;
         strides = a.strides;
         data = a.data;
@@ -68,11 +54,22 @@ public:
     }
 
     T operator()(initializer_list<size_t> a){
-        
+        assert(a.size() == widths.size());
+
+        std::vector<size_t> b = a;
+        size_t tmp = 0;
+        for(size_t i=0; i< b.size(); ++i){
+            assert(b[i] < widths[i] && b[i] >= 0);
+            tmp += b[i] * strides[i];
+        }
+
+        tmp += offset;
+
+        return (data.get()->at(tmp));
     }
 
     Tensor<T> slice(const size_t&  index, const size_t& value){
-        Tensor<T> a = Tensor<T>(this);
+        Tensor<T> a = Tensor<T>(widths);
         a.widths = erase<size_t>(widths, index);
         a.strides = erase<size_t>(strides, index);
         a.offset += (strides[index] * value);
@@ -80,8 +77,6 @@ public:
     }
 
     Tensor<T> flatten(const size_t& start, const size_t& stop){
-        Tensor<T> a = Tensor<T>(this);
-
         std::vector<size_t> new_width;
         size_t tmp=1;
         size_t flat=-1;
@@ -98,9 +93,11 @@ public:
             }
         }
 
-        a.widths = new_width;
+        Tensor<T> a = Tensor<T>(new_width);
+
         // TODO opt
         a.strides = cummult(new_width);
+        a.data = data;
 
         return a;
     }
@@ -110,7 +107,7 @@ public:
         assert(widths[index] > stop);
         assert(start >= 0);
 
-        Tensor<T> a = Tensor<T>(this);
+        Tensor<T> a = Tensor<T>(widths);
 
         a.widths[index] = stop - start + 1;
         a.offset += a.strides[index] * start;
