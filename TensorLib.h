@@ -33,6 +33,7 @@ public:
         widths = a;
         strides = cummult<size_t>(widths,1);
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
+<<<<<<< HEAD
 
     }
 
@@ -59,17 +60,33 @@ public:
     //costruttore con le widths e i dati
     Tensor<T, rank>(std::initializer_list<size_t>&& new_widths, std::vector<T>& new_data){
        //TODO decidere se rank può essere 0
+=======
+
+    }
+
+    // when the rank is specified
+    Tensor<T>(const std::vector<size_t>& a){
+        // cout << "costruttore : Tensor<T>(std::vector<size_t>& a)" << endl;
+>>>>>>> parent of 44f492e... NEW: added default(empty) costructor, added widths and data constructor, FIX: fixed copy constructor, fixed shared_pointer operators in initialize
         if (rank!=0){
-            assert(new_widths.size()==rank);
+            assert(a.size()==rank);
         }
+<<<<<<< HEAD
         size_t full_size = std::accumulate(new_widths.begin(), new_widths.end(), 1, std::multiplies<size_t>());
         assert(full_size == new_data.size());
         widths = new_widths;
+=======
+        widths = a;
+>>>>>>> parent of 44f492e... NEW: added default(empty) costructor, added widths and data constructor, FIX: fixed copy constructor, fixed shared_pointer operators in initialize
         strides = cummult<size_t>(widths,1);
-        offset = 0;
-        initialize(new_data); //TODO è giusto passare il parametro così?
     }
 
+    // copy constructor
+    Tensor<T>(const Tensor<T>& a){
+        widths = a.widths;
+        strides = a.strides;
+        data = a.data;
+    }
 
 =======
 >>>>>>> parent of a642c88... Merge branch 'ceck'
