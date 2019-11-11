@@ -234,8 +234,9 @@ private:
     size_t _size=0;
     size_t _flattened_dim=-1000;
 
-    // when you do slicing then there is an index that it is defaulted
+    // when you do slicing then there is an index that is defaulted
     std::vector<tuple<size_t, size_t>> _default;
+    //this can be shared through flattened tensors and their father
     std::vector<size_t> _old_dimensions;
 
     std::shared_ptr<std::vector<T>> _vec;
