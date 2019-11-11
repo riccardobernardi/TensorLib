@@ -28,7 +28,6 @@ public:
         widths = a;
         strides = cummult<size_t>(widths,1);
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
-
     }
 
     // when the rank is specified
@@ -46,6 +45,7 @@ public:
         widths = a.widths;
         strides = a.strides;
         data = a.data;
+        offset = a.offset;
     }
 
     // initialize with an array that will be represented as a tensor
@@ -53,6 +53,7 @@ public:
         if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
             data = make_shared<std::vector<T>>(a);
         }else{
+            // cout << a.size() << data.get()->size() << endl;
             cout << "Una volta inizializzato il vettore non può essere modificato nelle dimensioni!" << endl;
         }
     }
@@ -62,12 +63,23 @@ public:
 
         std::vector<size_t> indices_v = indices;
         size_t tmp = 0;
+
         for(size_t i=0; i< indices_v.size(); ++i){
             assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
+            cout << "stride: " << strides[i] << endl;
             tmp += indices_v[i] * strides[i];
+            // cout << "value: " << tmp << endl;
         }
-
         tmp += offset;
+        // cout << "+tmp: " << tmp << endl;
+
+        // cout << tmp << endl;
+        assert(data.get() != nullptr);
+        assert(data.get()->size() == 36);
+
+        /*cout << "result:" << data.get()->size() << endl;
+        cout << "value:" << tmp << endl;
+        cout << "result:::::" << data.get()->at(tmp) << endl;*/
 
         return (data.get()->at(tmp));
         //return (*data)[tmp];      //versione alternativa
@@ -107,12 +119,15 @@ public:
         a.widths = erase<size_t>(widths, index);
         a.strides = erase<size_t>(strides, index);
         a.offset += (strides[index] * value);
+        a.data = data;
+        assert(data.get() != nullptr);
         return a;
     }
 
     Tensor<T> flatten(const size_t& start, const size_t& stop){  //estremi inclusi
         assert(start >= 0 && start < widths.size());
         assert(stop >= 0 && stop < widths.size());
+
         std::vector<size_t> new_width;
         size_t tmp=1;
 
@@ -134,9 +149,11 @@ public:
         Tensor<T> a = Tensor<T>(new_width); //qui non conosciamo il rank a tempo di compilazione perchè dipende da start e width
 
         // TODO opt
-        a.strides = cummult(new_width);
+        a.strides = cummult<size_t>(new_width,1);
         a.data = data;
+        a.offset = offset;
 
+        assert(data.get() != nullptr);
         return a;
     }
 
@@ -152,6 +169,7 @@ public:
         a.widths[index] = stop - start + 1;
         a.offset += a.strides[index] * start;
 
+        assert(data.get() != nullptr);
         return a;
     }
     
