@@ -39,20 +39,20 @@ public:
 
     // move constructor
     Tensor<T>(Tensor<T>&& a){
-        // cout << "costruttore : Tensor<T>(Tensor<T>&& a)" << endl;
-        if (rank!=0){
-            assert(a._rank==rank);
-        }
         widths = a.widths;
         strides = a.strides;
         data = a.data;
     }
 
+    // copy constructor
     Tensor<T>(Tensor<T>& a){
-        // cout << "costruttore : Tensor<T>(Tensor<T>& a)" << endl;
-        if (rank!=0){
-            assert(a._rank==rank);
-        }
+        widths = a.widths;
+        strides = a.strides;
+        data = a.data;
+    }
+
+    // copy constructor
+    Tensor<T>(Tensor<T> a){
         widths = a.widths;
         strides = a.strides;
         data = a.data;
@@ -81,9 +81,40 @@ public:
 
     Tensor<T> flatten(const size_t& start, const size_t& stop){
         Tensor<T> a = Tensor<T>(this);
-        a.widths = erase<size_t>(widths, index);
-        a.strides = erase<size_t>(strides, index);
-        a.offset += (strides[index] * value);
+
+        std::vector<size_t> new_width;
+        size_t tmp=1;
+        size_t flat=-1;
+
+        for(int i=0;i<widths.size();++i){
+            if (i<start || i>stop){
+                new_width.push_back(widths[i]);
+            }else{
+                tmp*=widths[i];
+                if(i==stop){
+                    new_width.push_back(tmp);
+                    // flat = new_width.size() - 1;
+                }
+            }
+        }
+
+        a.widths = new_width;
+        // TODO opt
+        a.strides = cummult(new_width);
+
+        return a;
+    }
+
+    Tensor<T> window(const size_t& index, const size_t& start, const size_t& stop){
+        assert(stop > start);
+        assert(widths[index] > stop);
+        assert(start >= 0);
+
+        Tensor<T> a = Tensor<T>(this);
+
+        a.widths[index] = stop - start + 1;
+        a.offset += a.strides[index] * start;
+
         return a;
     }
     
