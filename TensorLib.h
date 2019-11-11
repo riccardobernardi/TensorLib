@@ -22,8 +22,8 @@ using namespace std;
 template<class T = int, size_t rank=0>
 class Tensor {
 public:
-    //costruttore con le widths
-    Tensor<T, rank>(std::initializer_list<size_t>&& a){
+    // when the rank is not specified
+    Tensor<T>(std::initializer_list<size_t>&& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
         //TODO decidere se rank può essere 0
         if (rank!=0){
@@ -33,17 +33,27 @@ public:
         widths = a;
         strides = cummult<size_t>(widths,1);
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
-        offset = 0;
+    }
+
+    // when the rank is specified
+    Tensor<T>(const std::vector<size_t>& a){
+        // cout << "costruttore : Tensor<T>(std::vector<size_t>& a)" << endl;
+        if (rank!=0){
+            assert(a.size()==rank);
+        }
+        widths = a;
+        strides = cummult<size_t>(widths,1);
     }
 
     // copy constructor
-    Tensor<T, rank>(const Tensor<T, rank>& a){
+    Tensor<T>(const Tensor<T>& a){
         widths = a.widths;
         strides = a.strides;
         data = a.data;
         offset = a.offset;
     }
 
+<<<<<<< HEAD
     //TODO lo facciamo il move constructor?
 
     //costruttore con le widths e i dati
@@ -61,12 +71,14 @@ public:
     }
 
 
+=======
+>>>>>>> parent of a642c88... Merge branch 'ceck'
     // initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
-        if ( (!data) || (a.size() == (*data).size()) ){
+        if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
             data = make_shared<std::vector<T>>(a);
         }else{
-            // TODO gestire con gli assert o altri tipi di errore?
+            // cout << a.size() << data.get()->size() << endl;
             cout << "Una volta inizializzato il vettore non può essere modificato nelle dimensioni!" << endl;
         }
     }
@@ -195,14 +207,6 @@ private:
 
     //data : mutable
     std::shared_ptr<std::vector<T>> data;
-
-    //default constructor 
-    Tensor<T, rank>(){      //lo usiamo internamente per comodità (nelle slice/window), non ha senso di essere pubblico
-        widths = std::vector<size_t>();
-        strides = std::vector<size_t>();
-        data = std::shared_ptr<std::vector<T>>();
-        offset = 0;
-    }
 };
 
 
