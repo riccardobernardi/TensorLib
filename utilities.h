@@ -5,7 +5,7 @@
 #ifndef TENSORLIB_UTILITIES_H
 #define TENSORLIB_UTILITIES_H
 
-/*template<class T = size_t>
+template<class T = size_t>
 static std::vector<T> cummult(std::vector<T> a, const size_t& span=0){
     if (a.size() > 0) {
         int size = a.size();
@@ -18,25 +18,6 @@ static std::vector<T> cummult(std::vector<T> a, const size_t& span=0){
         }
     }
     return a;               // TODO vediamo cosa ritornare se il vettore è vuoto
-}*/
-
-template < class T>
-static std::vector<T> cummult(std::vector<T> a, T span=0){
-    std::reverse(a.begin(),a.end());
-
-    std::vector<T> b;
-    for(int j=0; j<a.size();++j){
-        int tmp = 1;
-        for(int i=0; i< a.size()-j-span; ++i){
-            tmp = tmp*a[i+j];
-        }
-        b.push_back(tmp);
-        std::cout << "ho calcolato stride: " << tmp << std::endl;
-    }
-    b[b.size()-1] = 1;
-
-
-    return b;
 }
 
 template <class T>
