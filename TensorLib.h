@@ -10,6 +10,11 @@
 #include <type_traits>
 #include "utilities.h"
 #include<cstdarg>
+#include <iostream>
+#include <vector>
+#include <numeric>
+#include <string>
+#include <functional>
 
 
 using namespace std;
@@ -48,7 +53,7 @@ public:
             assert(new_widths.size()==rank);
         }
         size_t full_size = std::accumulate(new_widths.begin(), new_widths.end(), 1, std::multiplies<size_t>());
-        asser(full_size == new_data.size())
+        assert(full_size == new_data.size());
         widths = new_widths;
         strides = cummult<size_t>(widths,1);
         offset = 0;
