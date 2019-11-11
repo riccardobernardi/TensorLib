@@ -17,8 +17,8 @@ using namespace std;
 template<class T = int, size_t rank=0>
 class Tensor {
 public:
-    // when the rank is not specified
-    Tensor<T>(std::initializer_list<size_t>&& a){
+    //costruttore con le widths
+    Tensor<T, rank>(std::initializer_list<size_t>&& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
         //TODO decidere se rank può essere 0
         if (rank!=0){
@@ -28,32 +28,40 @@ public:
         widths = a;
         strides = cummult<size_t>(widths,1);
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
-    }
-
-    // when the rank is specified
-    Tensor<T>(const std::vector<size_t>& a){
-        // cout << "costruttore : Tensor<T>(std::vector<size_t>& a)" << endl;
-        if (rank!=0){
-            assert(a.size()==rank);
-        }
-        widths = a;
-        strides = cummult<size_t>(widths,1);
+        offset = 0;
     }
 
     // copy constructor
-    Tensor<T>(const Tensor<T>& a){
+    Tensor<T, rank>(const Tensor<T, rank>& a){
         widths = a.widths;
         strides = a.strides;
         data = a.data;
         offset = a.offset;
     }
 
+    //TODO lo facciamo il move constructor?
+
+    //costruttore con le widths e i dati
+    Tensor<T, rank>(std::initializer_list<size_t>&& new_widths, std::vector<T>& new_data){
+       //TODO decidere se rank può essere 0
+        if (rank!=0){
+            assert(new_widths.size()==rank);
+        }
+        size_t full_size = std::accumulate(new_widths.begin(), new_widths.end(), 1, std::multiplies<size_t>());
+        asser(full_size == new_data.size())
+        widths = new_widths;
+        strides = cummult<size_t>(widths,1);
+        offset = 0;
+        initialize(new_data); //TODO è giusto passare il parametro così?
+    }
+
+
     // initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
-        if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
+        if ( (!data) || (a.size() == (*data).size()) ){
             data = make_shared<std::vector<T>>(a);
         }else{
-            // cout << a.size() << data.get()->size() << endl;
+            // TODO gestire con gli assert o altri tipi di errore?
             cout << "Una volta inizializzato il vettore non può essere modificato nelle dimensioni!" << endl;
         }
     }
@@ -182,6 +190,14 @@ private:
 
     //data : mutable
     std::shared_ptr<std::vector<T>> data;
+
+    //default constructor 
+    Tensor<T, rank>(){      //lo usiamo internamente per comodità (nelle slice/window), non ha senso di essere pubblico
+        widths = std::vector<size_t>();
+        strides = std::vector<size_t>();
+        data = std::shared_ptr<std::vector<T>>();
+        offset = 0;
+    }
 };
 
 
