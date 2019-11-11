@@ -6,21 +6,18 @@
 #define TENSORLIB_UTILITIES_H
 
 template<class T = size_t>
-static std::vector<T> cummult(std::vector<T> a, T span=0){
-    std::reverse(a.begin(),a.end());
-
-    std::vector<T> b;
-    for(int j=0; j<a.size();++j){
-        int tmp = 1;
-        for(int i=0; i< a.size()-j-span; ++i){
-            tmp = tmp*a[i+j];
+static std::vector<T> cummult(std::vector<T> a, const size_t& span=0){
+    if (a.size() > 0) {
+        int size = a.size();
+        for (int j = size-1; j > -1; j--){
+            if (j < size-1) {
+                a[j] *= a[j+1];
+            } else {
+                a[j] *= span;
+            }
         }
-        b.push_back(tmp);
     }
-    b[b.size()-1] = 1;
-
-
-    return b;
+    return a;               // TODO vediamo cosa ritornare se il vettore è vuoto
 }
 
 template <class T>
