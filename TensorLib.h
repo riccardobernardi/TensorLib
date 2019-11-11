@@ -27,7 +27,7 @@ public:
 
         widths = a;
         strides = cummult<size_t>(widths,1);
-        data = std::make_shared<std::vector<T>>(strides[0] * width[0], 0); //vettore lungo mult(width) di zeri
+        data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
 
     }
 
@@ -89,8 +89,8 @@ public:
     }
 
     Tensor<T> slice(const size_t&  index, const size_t& value){
-        assert(index >= 0 && index < width.size());
-        asser(value >= 0 && value < width[index]);
+        assert(index >= 0 && index < widths.size());
+        assert(value >= 0 && value < widths[index]);
         
         if(rank == 1){
             //TODO caso particolare in cui si crea un tensore di rango 0
@@ -111,8 +111,8 @@ public:
     }
 
     Tensor<T> flatten(const size_t& start, const size_t& stop){  //estremi inclusi
-        assert(start >= 0 && start < width.size());
-        assert(stop >= 0 && stop < width.size());
+        assert(start >= 0 && start < widths.size());
+        assert(stop >= 0 && stop < widths.size());
         std::vector<size_t> new_width;
         size_t tmp=1;
 
