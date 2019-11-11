@@ -27,3 +27,4 @@ cmake-build-debug/Makefile
 cmake-build-debug/CMakeFiles/TargetDirectories.txt
 CM0470_2: Assignment #1: Tensor Library (trascinato).pdf
 CMakeLists.txt
+.vscode/
