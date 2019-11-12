@@ -191,7 +191,7 @@ void test_flattening_complex_full(){
 
     // cout << "sto per fare una difficile operazione" << endl;
 
-    int c = b({11,0});
+    int c = b({11});
     cout << "il mio valore è: " << c << endl;
 }
 

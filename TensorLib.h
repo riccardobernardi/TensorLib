@@ -14,6 +14,7 @@
 
 using namespace std;
 
+// TODO controlli sulla larghezza del vettore
 template<class T = int, size_t rank=0>
 class Tensor {
 public:
@@ -68,7 +69,7 @@ public:
 
         for(size_t i=0; i< indices_v.size(); ++i){
             assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
-            cout << "stride: " << strides[i] << endl;
+            // cout << "stride: " << strides[i] << endl;
             tmp += indices_v[i] * strides[i];
             // cout << "value: " << tmp << endl;
         }
@@ -185,7 +186,6 @@ private:
     //data : mutable
     std::shared_ptr<std::vector<T>> data;
 };
-
 
 
 
