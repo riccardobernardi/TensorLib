@@ -203,6 +203,10 @@ void test_iterations(){
     }*/
 }
 
+void test_Tensor_constructor_despec(){
+    Tensor<int,3> a = Tensor<int,3>({1,2,3});
+}
+
 int main() {
 
     Test t;
@@ -227,6 +231,7 @@ int main() {
     t.add(test_flattening_complex_full,"test_flattening_complex_full");
     t.add(test_iterations,"test_iterations");
     t.add(test_check_consistent_initialization_with_permitted_reinit,"test_check_consistent_initialization_with_permitted_reinit");
+    t.add(test_Tensor_constructor_despec,"test_Tensor_constructor_despec");
     t.launch_test(-1);
     //t.launch_test(13);
 
