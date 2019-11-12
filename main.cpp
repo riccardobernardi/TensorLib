@@ -207,9 +207,14 @@ void test_Tensor_constructor_despec(){
     Tensor<int, 3> a = Tensor<int, 3>({1,2,3});
 }
 
-void test_Tensor_compatibility(){
-    Tensor<int,3> a = Tensor<int,3>({1,2,3});
-    // Tensor<int> b = Tensor<int>(a);
+void test_Tensor_compatibility_specialization_assign(){
+    Tensor<int,3> a({1, 2, 3});
+    // Tensor<int> b(a);
+}
+
+void test_Tensor_compatibility_despecialization_assign(){
+    Tensor<int> a({1, 2, 3});
+    //Tensor<int,3> b(a.convert<int,3>());
 }
 
 int main() {
@@ -237,6 +242,8 @@ int main() {
     t.add(test_iterations,"test_iterations");
     t.add(test_check_consistent_initialization_with_permitted_reinit,"test_check_consistent_initialization_with_permitted_reinit");
     t.add(test_Tensor_constructor_despec,"test_Tensor_constructor_despec");
+    t.add(test_Tensor_compatibility_specialization_assign,"test_Tensor_compatibility_specialization_assign");
+    t.add(test_Tensor_compatibility_despecialization_assign,"test_Tensor_compatibility_despecialization_assign");
     t.launch_test(-1);
     //t.launch_test(13);
 
