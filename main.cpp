@@ -135,16 +135,14 @@ void test_flattening(){
 void test_flattening_complex(){
     Tensor<int> a = Tensor<int>({2,3,2,3});
     a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
-    // cout << "anche qui un operazione che crea errori1111" << endl;
     Tensor<int> b = a.flatten(0,1);
-    // cout << "anche qui un operazione che crea errori22222" << endl;
 
-    // b.print_privates();
-
+    // 18*1 + 6*2 + 3*1 + 1*0 = 33
     cout << "il mio valore  di controllo è: " << a({1,2,1,0}) << endl;
 
     // cout << "sto per fare una difficile operazione" << endl;
 
+    // 6*5 + 3*1 + 1*0 = 33
     int c = b({5,1,0});
     cout << "il mio valore è: " << c << endl;
 }
@@ -229,6 +227,7 @@ int main() {
     t.add(test_flattening_complex_full,"test_flattening_complex_full");
     t.add(test_iterations,"test_iterations");
     t.add(test_check_consistent_initialization_with_permitted_reinit,"test_check_consistent_initialization_with_permitted_reinit");
-    t.launch_test(-1);
+    // t.launch_test(-1);
+    t.launch_test(13);
 
 }

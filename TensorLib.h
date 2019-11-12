@@ -17,8 +17,8 @@ using namespace std;
 template<class T, size_t rank>
 class Tensor {
 public:
-    //costruttore con le widths
-    Tensor<T, rank>(std::initializer_list<size_t>&& a){
+    // when the rank is not specified
+    Tensor<T>(std::initializer_list<size_t>&& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
         //TODO decidere se rank può essere 0
         assert(a.size()==rank);
@@ -26,11 +26,20 @@ public:
         widths = a;
         strides = cummult<size_t>(widths,1);
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
-        offset = 0;
+    }
+
+    // when the rank is specified
+    Tensor<T>(const std::vector<size_t>& a){
+        // cout << "costruttore : Tensor<T>(std::vector<size_t>& a)" << endl;
+        if (rank!=0){
+            assert(a.size()==rank);
+        }
+        widths = a;
+        strides = cummult<size_t>(widths,1);
     }
 
     // copy constructor
-    Tensor<T, rank>(const Tensor<T, rank>& a){
+    Tensor<T>(const Tensor<T>& a){
         widths = a.widths;
         strides = a.strides;
         data = a.data;
@@ -69,10 +78,10 @@ public:
     //TODO cntrollo su width piuttosto che su su data.size() ??
     //initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
-        if ( (!data) || (a.size() == (*data).size()) ){
+        if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
             data = make_shared<std::vector<T>>(a);
         }else{
-            // TODO gestire con gli assert o altri tipi di errore?
+            // cout << a.size() << data.get()->size() << endl;
             cout << "Una volta inizializzato il vettore non può essere modificato nelle dimensioni!" << endl;
         }
     }
@@ -83,12 +92,23 @@ public:
 
         std::vector<size_t> indexes_v = indexes;
         size_t tmp = 0;
-        for(size_t i=0; i< indexes_v.size(); ++i){
-            assert(indexes_v[i] < widths[i] && indexes_v[i] >= 0);
-            tmp += indexes_v[i] * strides[i];
-        }
 
+        for(size_t i=0; i< indices_v.size(); ++i){
+            assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
+            cout << "stride: " << strides[i] << endl;
+            tmp += indices_v[i] * strides[i];
+            // cout << "value: " << tmp << endl;
+        }
         tmp += offset;
+        // cout << "+tmp: " << tmp << endl;
+
+        // cout << tmp << endl;
+        assert(data.get() != nullptr);
+        assert(data.get()->size() == 36);
+
+        /*cout << "result:" << data.get()->size() << endl;
+        cout << "value:" << tmp << endl;
+        cout << "result:::::" << data.get()->at(tmp) << endl;*/
 
         return (*data)[tmp];
     }
@@ -128,12 +148,15 @@ public:
         a.widths = erase<size_t>(widths, index);
         a.strides = erase<size_t>(strides, index);
         a.offset += (strides[index] * value);
+        a.data = data;
+        assert(data.get() != nullptr);
         return a;
     }
 
     Tensor<T> flatten(const size_t& start, const size_t& stop){  //estremi inclusi
         assert(start >= 0 && start < widths.size());
         assert(stop >= 0 && stop < widths.size());
+
         std::vector<size_t> new_width;
         size_t tmp=1;
 
@@ -155,9 +178,11 @@ public:
         Tensor<T> a = Tensor<T>(new_width); //qui non conosciamo il rank a tempo di compilazione perchè dipende da start e width
 
         // TODO opt
-        a.strides = cummult(new_width);
+        a.strides = cummult<size_t>(new_width,1);
         a.data = data;
+        a.offset = offset;
 
+        assert(data.get() != nullptr);
         return a;
     }
 
@@ -173,6 +198,7 @@ public:
         a.widths[index] = stop - start + 1;
         a.offset += a.strides[index] * start;
 
+        assert(data.get() != nullptr);
         return a;
     }
 
