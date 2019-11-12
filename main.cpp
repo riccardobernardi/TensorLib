@@ -204,7 +204,12 @@ void test_iterations(){
 }
 
 void test_Tensor_constructor_despec(){
-    Tensor<> a = Tensor<>({1,2,3});
+    Tensor<int, 3> a = Tensor<int, 3>({1,2,3});
+}
+
+void test_Tensor_compatibility(){
+    Tensor<int,3> a = Tensor<int,3>({1,2,3});
+    // Tensor<int> b = Tensor<int>(a);
 }
 
 int main() {
