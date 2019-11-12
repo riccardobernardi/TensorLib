@@ -39,6 +39,21 @@ public:
         offset = a.offset;
     }
 
+    //move constructor, se forniamo il move constructor dobbiamo permettere di reinserire il vettore di dati, infatti il tensore che viene passato come parametro al move constructor rimarrà vuoto.
+    Tensor<T, rank>(const Tensor<T, rank>&& a){
+        widths = a.widths;
+        strides = a.strides;
+        data = a.data;
+        offset = a.offset;
+
+        a.widths = std::vector<size_t>();
+        a.strides = std::vector<size_t>();
+        a.data = std::shared_ptr<std::vector<T>>();
+        a.offset = 0;
+    }
+
+
+
     //TODO lo facciamo il move constructor?
 
     //costruttore con le widths e i dati
@@ -55,8 +70,8 @@ public:
         initialize(new_data); //TODO è giusto passare il parametro così?
     }
 
-
-    // initialize with an array that will be represented as a tensor
+    //TODO cntrollo su width piuttosto che su su data.size() ??
+    //initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
         if ( (!data) || (a.size() == (*data).size()) ){
             data = make_shared<std::vector<T>>(a);
@@ -66,7 +81,8 @@ public:
         }
     }
 
-    T operator()(initializer_list<size_t> indices){
+    //ritornando la reference si lascia la possibilità di settare il valore dell'elemento ritornato
+    T& operator()(initializer_list<size_t> indices){
         assert(indices.size() == widths.size());
 
         std::vector<size_t> indices_v = indices;
@@ -78,10 +94,9 @@ public:
 
         tmp += offset;
 
-        return (data.get()->at(tmp));
-        //return (*data)[tmp];      //versione alternativa
+        return (*data)[tmp];
     }
-
+    //questo lo teniamo però anche l'operatore parentesi può essere usato per settare
     void set(initializer_list<size_t> indices, T& value){
         assert(indices.size() == widths.size());
 
@@ -105,7 +120,7 @@ public:
             //TODO caso particolare in cui si crea un tensore di rango 0
         }
         
-        Tensor<T> a = Tensor<T>(widths);
+        Tensor<T, rank-1> a = Tensor<T, rank-1>();
         /*
         tmp_widths = erase<size_t>(widths, index);
         Tensor<T, rank-1> a = Tensor<T, rank-1>(tmp_widths);         //versione inefficiente ma corretta, crea un vettore vuoto 
@@ -175,10 +190,7 @@ private:
     std::shared_ptr<std::vector<T>> data;
 
     //default constructor 
-    Tensor<T, rank>(){      //lo usiamo internamente per comodità (nelle slice/window), non ha senso di essere pubblico
-        widths = std::vector<size_t>();
-        strides = std::vector<size_t>();
-        data = std::shared_ptr<std::vector<T>>();
+    Tensor<T, rank>() : width(), strides(), data() {      //lo usiamo internamente per comodità (nelle slice/window), non ha senso di essere pubblico
         offset = 0;
     }
 };
