@@ -201,8 +201,15 @@ public:
 
     TensorIterator<T>(const Tensor<T>& tensor) {
         this.tensor = tensor;
-        indexes = std::vector<size_t>(this.tensor.widths.size(), 0)
+        indexes = std::vector<size_t>(this.tensor.widths.size(), 0);
     }
+
+    TensorIterator<T>(const TensorIterator<T>& old_iterator) {
+        this.tensor = old_iterator.tensor;
+        this.indexes = old_iterator.indexes;
+    }
+
+    T& 
 
 
 
@@ -210,6 +217,27 @@ private:
     Tensor<T>& Tensor;
     std::vector<size_t> indexes;
 
+    T& operator*() {
+        //TODO
+    }
+
+    //TODO overload ->
+
+    TensorIterator<T> operator++(int) {
+        //TODO crea nuovo, incrementa me e ritorna l'altro
+    }
+
+    TensorIterator<T>& operator++() {
+        //TODO incrementa me e ritorna la referenza
+    }
+
+    bool operator==(TensorIterator<T> other_iterator){
+        //TODO
+    }
+
+    bool operator!=(TensorIterator<T> other_iterator){
+        //TODO
+    }
 
 
 
