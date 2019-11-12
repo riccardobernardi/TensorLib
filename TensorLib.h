@@ -14,17 +14,15 @@
 
 using namespace std;
 
-template<class T = int, size_t rank=0>
+template<class T, size_t rank>
 class Tensor {
 public:
     // when the rank is not specified
     Tensor<T>(std::initializer_list<size_t>&& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
         //TODO decidere se rank può essere 0
-        if (rank!=0){
-            assert(a.size()==rank);
-        }
-
+        assert(a.size()==rank);
+    
         widths = a;
         strides = cummult<size_t>(widths,1);
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
@@ -48,7 +46,37 @@ public:
         offset = a.offset;
     }
 
-    // initialize with an array that will be represented as a tensor
+    //move constructor, se forniamo il move constructor dobbiamo permettere di reinserire il vettore di dati, infatti il tensore che viene passato come parametro al move constructor rimarrà vuoto.
+    Tensor<T, rank>(const Tensor<T, rank>&& a){
+        widths = a.widths;
+        strides = a.strides;
+        data = a.data;
+        offset = a.offset;
+
+        a.widths = std::vector<size_t>();
+        a.strides = std::vector<size_t>();
+        a.data = std::shared_ptr<std::vector<T>>();             //non è necessario fare altre operazioni sul vecchio shared_pointer (per fare in modo che decrementi il contatore di pointers attivi)
+        a.offset = 0;                                           //poichè l'operatore = è overloadato e ci pensano loro
+    }
+
+
+
+    //TODO lo facciamo il move constructor?
+
+    //costruttore con le widths e i dati
+    Tensor<T, rank>(std::initializer_list<size_t>&& new_widths, std::vector<T>& new_data){
+       //TODO decidere se rank può essere 0
+        assert(new_widths.size()==rank);
+        size_t full_size = std::accumulate(new_widths.begin(), new_widths.end(), 1, std::multiplies<size_t>());
+        assert(full_size == new_data.size());
+        widths = new_widths;
+        strides = cummult<size_t>(widths,1);
+        offset = 0;
+        initialize(new_data); //TODO è giusto passare il parametro così?
+    }
+
+    //TODO cntrollo su width piuttosto che su su data.size() ??
+    //initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
         if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
             data = make_shared<std::vector<T>>(a);
@@ -58,10 +86,11 @@ public:
         }
     }
 
-    T operator()(initializer_list<size_t> indices){
-        assert(indices.size() == widths.size());
+    //ritornando la reference si lascia la possibilità di settare il valore dell'elemento ritornato
+    T& operator()(initializer_list<size_t> indexes){
+        assert(indexes.size() == widths.size());
 
-        std::vector<size_t> indices_v = indices;
+        std::vector<size_t> indexes_v = indexes;
         size_t tmp = 0;
 
         for(size_t i=0; i< indices_v.size(); ++i){
@@ -81,18 +110,18 @@ public:
         cout << "value:" << tmp << endl;
         cout << "result:::::" << data.get()->at(tmp) << endl;*/
 
-        return (data.get()->at(tmp));
-        //return (*data)[tmp];      //versione alternativa
+        return (*data)[tmp];
     }
 
-    void set(initializer_list<size_t> indices, T& value){
-        assert(indices.size() == widths.size());
+    //questo lo teniamo però anche l'operatore parentesi può essere usato per settare
+    void set(initializer_list<size_t> indexes, T& value){
+        assert(indexes.size() == widths.size());
 
-        std::vector<size_t> indices_v = indices;
+        std::vector<size_t> indexes_v = indexes;
         size_t tmp = 0;
-        for(size_t i=0; i< indices_v.size(); ++i){
-            assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
-            tmp += indices_v[i] * strides[i];
+        for(size_t i=0; i< indexes_v.size(); ++i){
+            assert(indexes_v[i] < widths[i] && indexes_v[i] >= 0);
+            tmp += indexes_v[i] * strides[i];
         }
 
         tmp += offset;
@@ -108,7 +137,7 @@ public:
             //TODO caso particolare in cui si crea un tensore di rango 0
         }
         
-        Tensor<T> a = Tensor<T>(widths);
+        Tensor<T, rank-1> a = Tensor<T, rank-1>();
         /*
         tmp_widths = erase<size_t>(widths, index);
         Tensor<T, rank-1> a = Tensor<T, rank-1>(tmp_widths);         //versione inefficiente ma corretta, crea un vettore vuoto 
@@ -135,7 +164,7 @@ public:
             //TODO caso in cui il risultante è un tensore di grado 0
         }
 
-        for(int i=0;i<widths.size();++i){
+        for(size_t i=0;i<widths.size();++i){
             if (i<start || i>stop) {
                 new_width.push_back(widths[i]);
             } else {
@@ -172,7 +201,8 @@ public:
         assert(data.get() != nullptr);
         return a;
     }
-    
+
+    //overload =
 private:
 
     // metadata : immutable
@@ -182,9 +212,65 @@ private:
 
     //data : mutable
     std::shared_ptr<std::vector<T>> data;
+
+    //default constructor 
+    Tensor<T, rank>() : width(), strides(), data() {      //lo usiamo internamente per comodità (nelle slice/window), non ha senso di essere pubblico
+        offset = 0;
+    }
 };
 
+//come facciamo il template??
+template<class T>
 
+class TensorIterator {
+public:
+
+    TensorIterator<T>(const Tensor<T>& tensor) {
+        this.tensor = tensor;
+        indexes = std::vector<size_t>(this.tensor.widths.size(), 0);
+    }
+
+    TensorIterator<T>(const TensorIterator<T>& old_iterator) {
+        this.tensor = old_iterator.tensor;
+        this.indexes = old_iterator.indexes;
+    }
+
+    T& 
+
+
+
+private:
+    Tensor<T>& Tensor;
+    std::vector<size_t> indexes;
+
+    T& operator*() {
+        //TODO
+    }
+
+    //TODO overload ->
+
+    TensorIterator<T> operator++(int) {
+        //TODO crea nuovo, incrementa me e ritorna l'altro
+    }
+
+    TensorIterator<T>& operator++() {
+        //TODO incrementa me e ritorna la referenza
+    }
+
+    bool operator==(TensorIterator<T> other_iterator){
+        //TODO
+    }
+
+    bool operator!=(TensorIterator<T> other_iterator){
+        //TODO
+    }
+
+
+
+
+
+    
+}
 
 
 
