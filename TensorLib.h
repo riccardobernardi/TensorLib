@@ -48,8 +48,8 @@ public:
 
         a.widths = std::vector<size_t>();
         a.strides = std::vector<size_t>();
-        a.data = std::shared_ptr<std::vector<T>>();
-        a.offset = 0;
+        a.data = std::shared_ptr<std::vector<T>>();             //non è necessario fare altre operazioni sul vecchio shared_pointer (per fare in modo che decrementi il contatore di pointers attivi)
+        a.offset = 0;                                           //poichè l'operatore = è overloadato e ci pensano loro
     }
 
 
@@ -96,6 +96,7 @@ public:
 
         return (*data)[tmp];
     }
+
     //questo lo teniamo però anche l'operatore parentesi può essere usato per settare
     void set(initializer_list<size_t> indices, T& value){
         assert(indices.size() == widths.size());
