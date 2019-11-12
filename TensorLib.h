@@ -26,7 +26,9 @@ public:
         }
 
         widths = a;
-        strides = cummult<size_t>(widths,1);
+        strides = cummult(widths);
+        cout <<"www"<< widths[0] << endl;
+        cout <<"sss"<< strides[0] <<endl;
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
@@ -37,7 +39,7 @@ public:
             assert(a.size()==rank);
         }
         widths = a;
-        strides = cummult<size_t>(widths,1);
+        strides = cummult(widths);
     }
 
     // copy constructor
@@ -149,7 +151,7 @@ public:
         Tensor<T> a = Tensor<T>(new_width); //qui non conosciamo il rank a tempo di compilazione perchè dipende da start e width
 
         // TODO opt
-        a.strides = cummult<size_t>(new_width,1);
+        a.strides = cummult(new_width);
         a.data = data;
         a.offset = offset;
 

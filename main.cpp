@@ -23,7 +23,7 @@ static void test_base(){
 }
 
 void test_cummult(){
-    for (auto i :cummult<int>({2, 2, 2})) {
+    for (auto i :cummult({2, 2, 2})) {
         cout << i << " ";
     }
 }
@@ -227,7 +227,7 @@ int main() {
     t.add(test_flattening_complex_full,"test_flattening_complex_full");
     t.add(test_iterations,"test_iterations");
     t.add(test_check_consistent_initialization_with_permitted_reinit,"test_check_consistent_initialization_with_permitted_reinit");
-    // t.launch_test(-1);
-    t.launch_test(13);
+    t.launch_test(-1);
+    //t.launch_test(13);
 
 }
