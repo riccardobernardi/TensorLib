@@ -1,2 +1,2 @@
 # TensorLib
-Torsello's first assignment consisting of a tensor library
+Torsello's first assignment consisting of a ttensor library

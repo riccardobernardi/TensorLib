@@ -15,10 +15,25 @@
 
 using namespace std;
 
+template<class T>
+class TensorIterator;
+
+template<class T, int rank>
+class TensorIteratorFixed;
+
 // TODO controlli sulla larghezza del vettore
 template<class T = int, int rank=-1>
 class Tensor {
 public:
+
+    TensorIteratorFixed<T, rank> begin(){
+        return TensorIteratorFixed<T, rank>(*this);
+    }
+
+    TensorIteratorFixed<T, rank> end(){
+        return TensorIteratorFixed<T, rank>(*this);
+    }
+
     // when the rank is not specified
     Tensor<T,rank>(std::initializer_list<size_t>&& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
@@ -63,7 +78,7 @@ public:
         a.offset = 0;                                           //poichè l'operatore = è overloadato e ci pensano loro
     }
 
-    // initialize with an array that will be represented as a tensor
+    // initialize with an array that will be represented as a ttensor
     void initialize(std::initializer_list<T>&& a){
         if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
             data = make_shared<std::vector<T>>(a);
@@ -231,6 +246,16 @@ private:
 template<class T>
 class Tensor<T,-1> {
 public:
+    friend class TensorIterator<T>;
+
+    TensorIterator<T> begin(){
+        return TensorIterator<T>(*this);
+    }
+
+    TensorIterator<T> end(){
+        return TensorIterator<T>(*this) + cummult(widths)[0]*widths[0];
+    }
+
     // when the rank is not specified
     Tensor<T>(std::initializer_list<size_t>&& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
@@ -281,7 +306,7 @@ public:
         return a;
     }*/
 
-    // initialize with an array that will be represented as a tensor
+    // initialize with an array that will be represented as a ttensor
     void initialize(std::initializer_list<T>&& a){
         if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
             data = make_shared<std::vector<T>>(a);
@@ -502,7 +527,7 @@ public:
         offset = a.offset;
     }
 
-    // initialize with an array that will be represented as a tensor
+    // initialize with an array that will be represented as a ttensor
     void initialize(std::initializer_list<T>&& a){
         if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
             data = make_shared<std::vector<T>>(a);
@@ -599,23 +624,22 @@ template<class T>
 class TensorIterator {
 public:
 
-    TensorIterator<T>(const Tensor<T>& tensor) {
-        tensor = tensor;
-        indexes = std::vector<int>(tensor.widths.size(), 0);
+    TensorIterator<T>(Tensor<T>& tensor) : ttensor(tensor) {
+        indexes = std::vector<int>(ttensor.widths.size(), 0);
     }
 
-    TensorIterator<T>(const TensorIterator<T>& old_iterator) {
-        tensor = old_iterator.tensor;
+/*    TensorIterator<T>(const TensorIterator<T>& old_iterator) {
+        ttensor = old_iterator.ttensor;
         indexes = old_iterator.indexes;
-    }
+    }*/
 
     T& operator*() const {
-        return tensor(this->indexes);
+        return ttensor(indexes);
     }
 
     //TODO se faccio il pointer di una reference funziona?
     T* operator->() const {
-        return &(tensor(indexes));
+        return &(ttensor(indexes));
     }
 
     TensorIterator<T> operator++(int) {
@@ -645,11 +669,11 @@ public:
     }
 
     bool operator==(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.tensor == tensor && other_iterator.indexes == indexes);
+        return (other_iterator.ttensor == ttensor && other_iterator.indexes == indexes);
     }
 
     bool operator!=(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.tensor != tensor || other_iterator.indexes != indexes);
+        return (/*other_iterator.ttensor != ttensor ||*/ other_iterator.indexes != indexes);
     }
 
     TensorIterator<T>& operator+=(int inc) {
@@ -678,35 +702,35 @@ public:
         std::vector<int> tmp_indexes = indexes;
         indexes = std::vector<int>(indexes.size(), 0);
         increment(access_index);
-        T& tmp_ret = tensor(indexes);
+        T& tmp_ret = ttensor(indexes);
         indexes = tmp_indexes;
         return tmp_ret;
     }
 
     bool operator<(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.tensor == tensor && indexes < other_iterator.indexes);
+        return (other_iterator.ttensor == ttensor && indexes < other_iterator.indexes);
     }
 
     bool operator>(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.tensor == tensor && indexes > other_iterator.indexes);
+        return (other_iterator.ttensor == ttensor && indexes > other_iterator.indexes);
     }
 
     bool operator<=(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.tensor == tensor && indexes <= other_iterator.indexes);
+        return (other_iterator.ttensor == ttensor && indexes <= other_iterator.indexes);
     }
 
     bool operator>=(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.tensor == tensor && indexes >= other_iterator.indexes);
+        return (other_iterator.ttensor == ttensor && indexes >= other_iterator.indexes);
     }
 
     
     int operator-(const TensorIterator<T>& other_iterator) const {
-        assert(other_iterator.tensor == tensor);
+        assert(other_iterator.ttensor == ttensor);
         return (single_index() - other_iterator.single_index());
     }
 
 private:
-    Tensor<T>& tensor;
+    Tensor<T>& ttensor;
     std::vector<int> indexes;
     //con size_t non si può lavorare con valori negativi, a noi serve int perchè per il decremento degli indici li mettiamo temporaneamente negativi
 
@@ -715,7 +739,7 @@ private:
         size_t acc_mult = 1;
         for (size_t i = indexes.size()-1; i >= 0; i--){
             single_index += indexes[i] * acc_mult;
-            acc_mult *= tensor.widths[i];
+            acc_mult *= ttensor.widths[i];
         }
         return single_index;
     }
@@ -725,28 +749,28 @@ private:
         
         indexes[i] += index_inc;
         //rimani dentro finchè gli indici sono fuori dal range, cioè finche l'incremento deve propagarsi all'indice superiore
-        while ( i > 0 && (indexes[i] < 0 || indexes[i] >= tensor.widths[i]) ) {
+        while ( i > 0 && (indexes[i] < 0 || indexes[i] >= ttensor.widths[i]) ) {
             if (indexes[i] < 0) {
                 // TODO controllare che la divisione funzioni, ed: divisione intera o no?
-                index_inc = ceil(indexes[i] / tensor.widths[i]); // numero di volte in cui viene attraversato (in negativo) l'intervallo dato dalla width = numero da decrementare all'indice a sinistra
+                index_inc = ceil(indexes[i] / ttensor.widths[i]); // numero di volte in cui viene attraversato (in negativo) l'intervallo dato dalla width = numero da decrementare all'indice a sinistra
             } else {
-                index_inc = floor(indexes[i] / tensor.widths[i]);
+                index_inc = floor(indexes[i] / ttensor.widths[i]);
             }
-            indexes[i] = indexes[i] % tensor.width[i];
+            indexes[i] = indexes[i] % ttensor.widths[i];
             indexes[i-1] += index_inc;
         }
         //controllo overflow
-        assert( indexes[0] >= 0 && (indexes[0] >= tensor.widths[0]) );
+        assert( indexes[0] >= 0 && (indexes[0] >= ttensor.widths[0]) );
 
         /* vechia versione solo positiva
         this->indexes[last_index] += index_inc;
         for (size_t i = last_index; i > 0; i--) {
             //controllare che faccia divisione intera
-            this->indexes[i-1] += ( this->indexes[i] / this->tensor.widths[i]);
-            this->indexes[i] = ( this->indexes[i] % this->tensor.widths[i]);
+            this->indexes[i-1] += ( this->indexes[i] / this->ttensor.widths[i]);
+            this->indexes[i] = ( this->indexes[i] % this->ttensor.widths[i]);
         }
         //controllo overflow
-        assert(this->indexes[0] >= this->tensor.widths[0]);
+        assert(this->indexes[0] >= this->ttensor.widths[0]);
         */
     }
 };
@@ -769,31 +793,31 @@ public:
             assert(starting_indexes[i] < tensor.widths[i] );
         }
 
-        this->tensor = tensor;
-        indexes = std::vector<size_t>(this->tensor.widths.size(), 0);
+        ttensor = tensor;
+        indexes = std::vector<size_t>(this->ttensor.widths.size(), 0);
         this->sliding_index = sliding_index;
         //TODO per adesso assumiamo che sullo sliding_index si parta da 0
-        this->index[sliding_index] = 0;
+        index[this->sliding_index] = 0;
     }
 
-    TensorIteratorFixed<T, rank>(const TensorIterator<T>& old_iterator) {
-        this->tensor = old_iterator.tensor;
-        this->indexes = old_iterator.indexes;
-        this->sliding_index = old_iterator.sliding_index;
+    TensorIteratorFixed<T, rank>(const TensorIteratorFixed<T, rank>& old_iterator) {
+        ttensor = old_iterator.ttensor;
+        indexes = old_iterator.indexes;
+        sliding_index = old_iterator.sliding_index;
     }
 
     T& operator*() const {
-        return this->tensor(this->indexes);
+        return ttensor(indexes);
     }
 
 /*    //TODO se faccio il pointer di una reference funziona?
     T* operator->() const {
-        return &(this->tensor(this->indexes));
+        return &(this->ttensor(this->indexes));
     }*/
 
-    TensorIteratorFixed<T, rank> operator++(int) {
+    TensorIteratorFixed<T, rank>& operator++(int) {
         //TODO crea nuovo, incrementa me e ritorna l'altro
-        TensorIterator<T> new_iterator = TensorIterator<T>(*this);
+        TensorIteratorFixed<T, rank> new_iterator = TensorIteratorFixed<T, rank>(*this);
         increment(1);
         return new_iterator;
     }
@@ -804,25 +828,25 @@ public:
         return this;
     }
 
-    bool operator==(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.tensor == tensor && other_iterator.indexes == indexes && other_iterator.sliding_index == sliding_index);
+    bool operator==(const TensorIteratorFixed<T, rank>& other_iterator) const {
+        return (other_iterator.ttensor == ttensor && other_iterator.indexes == indexes && other_iterator.sliding_index == sliding_index);
     }
 
-    bool operator!=(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.tensor != tensor || other_iterator.indexes != indexes || other_iterator.sliding_index != sliding_index);
+    bool operator!=(const TensorIteratorFixed<T, rank>& other_iterator) const {
+        return (other_iterator.ttensor != ttensor || other_iterator.indexes != indexes || other_iterator.sliding_index != sliding_index);
     }
 
 
 private:
 
-    Tensor<T, rank>& tensor;
+    Tensor<T, rank>& ttensor;
     std::vector<size_t> indexes;
-    size_t sliding_index;
+    size_t sliding_index={};
 
     void increment(const size_t& index_inc) {
-        this->indexes[sliding_index] += index_inc;
+        indexes[sliding_index] += index_inc;
         //controllo overflow
-        assert(this->indexes[sliding_index] >= this->tensor.widths[sliding_index]);
+        assert(indexes[sliding_index] >= ttensor.widths[sliding_index]);
     }
 };
 
