@@ -336,6 +336,7 @@ public:
     Tensor<T> slice(const size_t&  index, const size_t& value){
         assert(index >= 0 && index < widths.size());
         assert(value >= 0 && value < widths[index]);
+        assert(widths.size() >= 1);
 
 
         Tensor<T> a = Tensor<T>(widths);
@@ -357,6 +358,7 @@ public:
     Tensor<T> flatten(const size_t& start, const size_t& stop){  //estremi inclusi
         assert(start >= 0 && start < widths.size());
         assert(stop >= 0 && stop < widths.size());
+        assert(widths.size() >= 2);
 
         std::vector<size_t> new_width;
         size_t tmp=1;
