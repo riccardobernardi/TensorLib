@@ -358,22 +358,22 @@ class TensorIterator {
 public:
 
     TensorIterator<T>(const Tensor<T>& tensor) {
-        this->tensor = tensor;
-        indexes = std::vector<int>(this->tensor.widths.size(), 0);
+        tensor = tensor;
+        indexes = std::vector<int>(tensor.widths.size(), 0);
     }
 
     TensorIterator<T>(const TensorIterator<T>& old_iterator) {
-        this->tensor = old_iterator.tensor;
-        this->indexes = old_iterator.indexes;
+        tensor = old_iterator.tensor;
+        indexes = old_iterator.indexes;
     }
 
     T& operator*() const {
-        return this->tensor(this->indexes);
+        return tensor(this->indexes);
     }
 
     //TODO se faccio il pointer di una reference funziona?
     T* operator->() const {
-        return &(this->tensor(this->indexes));
+        return &(tensor(indexes));
     }
 
     TensorIterator<T> operator++(int) {
@@ -411,12 +411,12 @@ public:
     }
 
     TensorIterator<T>& operator+=(int inc) {
-        this.increment(inc);
+        increment(inc);
         return *this;
     }
 
     TensorIterator<T>& operator-=(int dec) {
-        this.increment(-dec);
+        increment(-dec);
         return *this;
     }
 
