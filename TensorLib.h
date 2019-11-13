@@ -63,6 +63,22 @@ public:
         a.offset = 0;                                           //poichè l'operatore = è overloadato e ci pensano loro
     }
 
+    //costruttore con le widths e i dati
+    Tensor<T, rank>(std::initializer_list<size_t>&& new_widths, std::vector<T>& new_data){
+       //TODO decidere se rank può essere 0
+        if (rank!=0){
+            assert(a.size()==rank);
+            assert(new_widths.size()==rank);
+        }
+        widths = a;
+        size_t full_size = std::accumulate(new_widths.begin(), new_widths.end(), 1, std::multiplies<size_t>());
+        asser(full_size == new_data.size())
+        widths = new_widths;
+        strides = cummult<size_t>(widths,1);
+        offset = 0;
+        initialize(new_data); //TODO è giusto passare il parametro così?
+    }
+
     // initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
         if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
@@ -520,8 +536,8 @@ template<class T>
 class TensorIterator {
 public:
 
-    TensorIterator<T>(const Tensor<T>& tensor) {
-        tensor = tensor;
+    TensorIterator<T>(const Tensor<T>& new_tensor) {
+        tensor = new_tensor;
         indexes = std::vector<int>(tensor.widths.size(), 0);
     }
 
@@ -677,12 +693,11 @@ TensorIterator<T> operator+(int n, TensorIterator<T> iter){
     return iter + n;
 };
 
-/*
 template<class T>
 class TensorIteratorFixed{
 public:
 
-    TensorIterator<T> (const Tensor<T>& tensor, const std::vector<size_t>& starting_indexes, const size_t& sliding_index) {
+    TensorIteratorFixed<T>(const Tensor<T>& new_tensor, const std::vector<int>& starting_indexes, const size_t& sliding_index) {
         size_t indexes_size = starting_indexes.size();
         assert(indexes_size == tensor.widths.size());
 
@@ -691,62 +706,139 @@ public:
             assert(starting_indexes[i] < tensor.widths[i] );
         }
 
-        this->tensor = tensor;
-        indexes = std::vector<size_t>(this->tensor.widths.size(), 0);
-        this->sliding_index = sliding_index;
+        tensor = new_tensor;
+        indexes = std::vector<int>(tensor.widths.size());
+        sliding_index = sliding_index;
         //TODO per adesso assumiamo che sullo sliding_index si parta da 0
-        this->index[sliding_index] = 0;
+        index[sliding_index] = 0;
     }
 
-    TensorIterator<T>(const TensorIterator<T>& old_iterator) {
-        this->tensor = old_iterator.tensor;
-        this->indexes = old_iterator.indexes;
-        this->sliding_index = old_iterator.sliding_index;
+    TensorIteratorFixed<T>(const TensorIteratorFixed<T>& old_iterator) {
+        tensor = old_iterator.tensor;
+        indexes = old_iterator.indexes;
+        sliding_index = old_iterator.sliding_index;
     }
 
     T& operator*() const {
-        return this->tensor(this->indexes);
+        return tensor(indexes);
     }
 
     //TODO se faccio il pointer di una reference funziona?
     T* operator->() const {
-        return &(this->tensor(this->indexes));
+        return &(tensor(indexes));
     }
 
-    TensorIterator<T> operator++(int) {
-        //TODO crea nuovo, incrementa me e ritorna l'altro
+    TensorIteratorFixed<T> operator++(int) {
+        // crea nuovo, incrementa me e ritorna l'altro
         TensorIterator<T> new_iterator = TensorIterator<T>(*this);
         increment(1);
         return new_iterator;
     }
 
-    TensorIterator<T>& operator++() {
-        //TODO incrementa me e ritorna la referenza
+    TensorIteratorFixed<T>& operator++() {
+        //incrementa me e ritorna la referenza
         increment(1);
         return this;
     }
 
-    bool operator==(const TensorIterator<T>& other_iterator) const {
+    TensorIteratorFixed<T> operator--(int) {
+        // crea nuovo, decrementa me e ritorna l'altro
+        TensorIteratorFixed<T> new_iterator = TensorIteratorFixed<T>(*this);
+        increment(-1);
+        return new_iterator;
+    }
+
+    TensorIteratorFixed<T>& operator--() {
+        //decrementa me e ritorna la referenza
+        increment(-1);
+        return this;
+    }
+
+    bool operator==(const TensorIteratorFixed<T>& other_iterator) const {
         return (other_iterator.tensor == tensor && other_iterator.indexes == indexes && other_iterator.sliding_index == sliding_index);
     }
 
-    bool operator!=(const TensorIterator<T>& other_iterator) const {
+    bool operator!=(const TensorIteratorFixed<T>& other_iterator) const {
         return (other_iterator.tensor != tensor || other_iterator.indexes != indexes || other_iterator.sliding_index != sliding_index);
     }
 
+    TensorIteratorFixed<T>& operator+=(int inc) {
+        increment(inc);
+        return *this;
+    }
+
+    TensorIteratorFixed<T>& operator-=(int dec) {
+        increment(-dec);
+        return *this;
+    }
+
+    TensorIteratorFixed<T> operator+(int inc) const {
+        TensorIteratorFixed<T> new_iterator = TensorIteratorFixed<T>(*this);
+        new_iterator.increment(inc);
+        return new_iterator;
+    }
+
+    TensorIteratorFixed<T> operator-(int dec) const {
+        TensorIteratorFixed<T> new_iterator = TensorIteratorFixed<T>(*this);
+        new_iterator.increment(-dec);
+        return new_iterator;
+    }
+
+    T& operator[](int access_index) const {
+        std::vector<int> tmp_indexes = indexes;
+        indexes = std::vector<int>(indexes.size(), 0);
+        increment(access_index);
+        T& tmp_ret = tensor(indexes);
+        indexes = tmp_indexes;
+        return tmp_ret;
+    }
+
+    //gli operatori di confronto danno sempre false se non si scorre sulla stesa dimensione e sullo stesso tensore
+    bool operator<(const TensorIteratorFixed<T>& other_iterator) const {
+        return (other_iterator.tensor == tensor && sliding_index == other_iterator.sliding_index &&  check_indexes_equality(other_iterator, sliding_index) && indexes[sliding_index] < other_iterator.indexes[]sliding_index);
+    }
+
+    bool operator>(const TensorIteratorFixed<T>& other_iterator) const {
+        return (other_iterator.tensor == tensor && sliding_index == other_iterator.sliding_index &&  check_indexes_equality(other_iterator, sliding_index) && indexes[sliding_index] > other_iterator.indexes[]sliding_index);
+    }
+
+    bool operator<=(const TensorIteratorFixed<T>& other_iterator) const {
+        return (other_iterator.tensor == tensor && sliding_index == other_iterator.sliding_index &&  check_indexes_equality(other_iterator, sliding_index) && indexes[sliding_index] <= other_iterator.indexes[]sliding_index);
+    }
+
+    bool operator>=(const TensorIteratorFixed<T>& other_iterator) const {
+        return (other_iterator.tensor == tensor && sliding_index == other_iterator.sliding_index &&  check_indexes_equality(other_iterator, sliding_index) && indexes[sliding_index] >= other_iterator.indexes[]sliding_index);
+    }
+
+    int operator-(const TensorIteratorFixed<T>& other_iterator) const {
+        assert(other_iterator.tensor == tensor && other_iterator.sliding_index == sliding_index && check_indexes_equality(other_iterator, sliding_index));
+        return (sliding_index - sliding_index);
+    }
 
 private:
 
     Tensor<T>& tensor;
-    std::vector<size_t> indexes;
+    std::vector<int> indexes;
     size_t sliding_index;
 
-    void increment(const size_t& index_inc) {
-        this->indexes[sliding_index] += index_inc;
+    void increment(const int& index_inc) {
+        indexes[sliding_index] += index_inc;
         //controllo overflow
-        assert(this->indexes[sliding_index] >= this->tensor.widths[sliding_index]);
+        assert(indexes[sliding_index] >= 0 && indexes[sliding_index] < tensor.widths[sliding_index]);
+    }
+
+    bool check_indexes_equality(TensorIteratorFixed<T> other_iter, int index_ignore = -1){
+        bool ret = true;
+        for (int i = 0; i < indexes.size(); i++){
+            ret = ret && ( i == index_ignore || indexes[i] == other_iter.indexes[i]);
+        }
+        return ret;
     }
 };
-*/
+
+template<class T>
+TensorIteratorFixed<T> operator+(int n, TensorIteratorFixed<T> iter){
+    return iter + n;
+};
 
 #endif //TENSORLIB_TENSORLIB_H
