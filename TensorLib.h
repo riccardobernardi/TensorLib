@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <type_traits>
 #include "utilities.h"
-#include<cstdarg>
+#include <cstdarg>
 
 
 using namespace std;
@@ -514,7 +514,6 @@ private:
     std::shared_ptr<std::vector<T>> data;
 };
 
-//come facciamo il template??
 template<class T>
 class TensorIterator {
 public:
@@ -529,33 +528,168 @@ public:
         this->indexes = old_iterator.indexes;
     }
 
-private:
-    Tensor<T>& tensor;
-    std::vector<size_t> indexes;
-
-    T& operator*() {
-        //TODO
+    T& operator*() const {
+        return this->tensor(this->indexes);
     }
 
-    //TODO overload ->
+    //TODO se faccio il pointer di una reference funziona?
+    T* operator->() const {
+        return &(this->tensor(this->indexes));
+    }
 
     TensorIterator<T> operator++(int) {
         //TODO crea nuovo, incrementa me e ritorna l'altro
+        TensorIterator<T> new_iterator = TensorIterator<T>(*this);
+        increment(1);
+        return new_iterator;
     }
 
     TensorIterator<T>& operator++() {
         //TODO incrementa me e ritorna la referenza
+        increment(1);
+        return *this;
     }
 
-    bool operator==(TensorIterator<T> other_iterator){
-        //TODO
+    bool operator==(const TensorIterator<T>& other_iterator) const {
+        return (other_iterator.tensor == tensor && other_iterator.indexes == indexes);
     }
 
-    bool operator!=(TensorIterator<T> other_iterator){
-        //TODO
+    bool operator!=(const TensorIterator<T>& other_iterator) const {
+        return (other_iterator.tensor != tensor || other_iterator.indexes != indexes);
+    }
+
+    TensorIterator<T>& operator+=(int inc) {
+        if (inc >= 0 ){
+            this.increment(inc);
+        } else {
+            //this.decrement(-inc)
+        }
+
+        return *this;
+    }
+
+    TensorIterator<T>& operator-=(int dec) {
+        if (dec <= 0 ){
+            this.increment(-dec);
+        } else {
+            //this.decrement(dec)
+        }
+
+        return *this;
+    }
+
+    TensorIterator<T> operator+(int inc) {
+        TensorIterator<T> new_iterator = TensorIterator<T>(*this);
+        if (inc >= 0 ){
+            new_iterator.increment(inc);
+        } else {
+            //new_iterator.decrement(-inc)
+        }
+
+        return new_iterator;
+    }
+
+    TensorIterator<T> operator-(int dec) {
+        TensorIterator<T> new_iterator = TensorIterator<T>(*this);
+        if (dec < 0 ){
+            new_iterator.increment(-inc);
+        } else {
+            //new_iterator.decrement(inc)
+        }
+
+        return new_iterator;
+    }
+
+    //TODO <, >, <=, >=, decrement, iter - iter, direct access[], (n+iter)
+
+
+
+private:
+    Tensor<T>& tensor;
+    std::vector<size_t> indexes;
+
+    void increment(const size_t& index_inc) {
+        size_t last_index = this->indexes.size() - 1;
+        this->indexes[last_index] += index_inc;
+        for (size_t i = last_index; i > 0; i--) {
+            //controllare che faccia divisione intera
+            this->indexes[i-1] += ( this->indexes[i] / this->tensor.widths[i]);
+            this->indexes[i] = ( this->indexes[i] % this->tensor.widths[i]);
+        }
+        //controllo overflow
+        assert(this->indexes[0] >= this->tensor.widths[0]);
     }
 
 };
 
+template<class T>
+class TensorIteratorFixed{
+public:
+
+    TensorIterator<T>(const Tensor<T>& tensor, const std::vector<size_t>& starting_indexes, const size_t& sliding_index) {
+        size_t indexes_size = starting_indexes.size();
+        assert(indexes_size == tensor.widths.size());
+
+        assert(sliding_index >= 0 && sliding_index < indexes_size);
+        for (size_t i = 0; i < indexes_size; i++){
+            assert(starting_indexes[i] < tensor.widths[i] );
+        }
+
+        this->tensor = tensor;
+        indexes = std::vector<size_t>(this->tensor.widths.size(), 0);
+        this->sliding_index = sliding_index;
+        //TODO per adesso assumiamo che sullo sliding_index si parta da 0
+        this->index[sliding_index] = 0;
+    }
+
+    TensorIterator<T>(const TensorIterator<T>& old_iterator) {
+        this->tensor = old_iterator.tensor;
+        this->indexes = old_iterator.indexes;
+        this->sliding_index = old_iterator.sliding_index;
+    }
+
+    T& operator*() const {
+        return this->tensor(this->indexes);
+    }
+
+    //TODO se faccio il pointer di una reference funziona?
+    T* operator->() const {
+        return &(this->tensor(this->indexes));
+    }
+
+    TensorIterator<T> operator++(int) {
+        //TODO crea nuovo, incrementa me e ritorna l'altro
+        TensorIterator<T> new_iterator = TensorIterator<T>(*this);
+        increment(1);
+        return new_iterator;
+    }
+
+    TensorIterator<T>& operator++() {
+        //TODO incrementa me e ritorna la referenza
+        increment(1);
+        return this;
+    }
+
+    bool operator==(const TensorIterator<T>& other_iterator) const {
+        return (other_iterator.tensor == tensor && other_iterator.indexes == indexes && other_iterator.sliding_index == sliding_index);
+    }
+
+    bool operator!=(const TensorIterator<T>& other_iterator) const {
+        return (other_iterator.tensor != tensor || other_iterator.indexes != indexes || other_iterator.sliding_index != sliding_index);
+    }
+
+
+private:
+
+    Tensor<T>& tensor;
+    std::vector<size_t> indexes;
+    size_t sliding_index;
+
+    void increment(const size_t& index_inc) {
+        this->indexes[sliding_index] += index_inc;
+        //controllo overflow
+        assert(this->indexes[sliding_index] >= this->tensor.widths[sliding_index]);
+    }
+}
 
 #endif //TENSORLIB_TENSORLIB_H
