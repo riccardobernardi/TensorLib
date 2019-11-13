@@ -106,7 +106,7 @@ public:
         (*data)[tmp] = value;
     }
 
-    Tensor<T> slice(const size_t&  index, const size_t& value){
+    Tensor<T, rank - 1> slice(const size_t&  index, const size_t& value){
         assert(index >= 0 && index < widths.size());
         assert(value >= 0 && value < widths[index]);
         
@@ -114,7 +114,7 @@ public:
             //TODO caso particolare in cui si crea un tensore di rango 0
         }
         
-        Tensor<T, rank-1> a = Tensor<T, rank-1>();
+        Tensor<T, rank - 1> a = Tensor<T, rank - 1>();
         a.widths = erase<size_t>(widths, index);
         a.strides = erase<size_t>(strides, index);
         a.offset += (strides[index] * value);
@@ -123,9 +123,44 @@ public:
         return a;
     }
 
-    Tensor<T> flatten(const size_t& start, const size_t& stop){  //estremi inclusi
+    Tensor<T, rank - 1> flatten(const size_t& start, const size_t& stop){  //estremi inclusi
         assert(start >= 0 && start < widths.size());
         assert(stop >= 0 && stop < widths.size());
+        assert((stop-start) == 1);
+
+        std::vector<size_t> new_width;
+        size_t tmp=1;
+
+        if ( (rank - (stop - start +1)) == 0 ){
+            //TODO caso in cui il risultante è un tensore di grado 0 o 1
+        }
+
+        for(int i=0;i<widths.size();++i){
+            if (i<start || i>stop) {
+                new_width.push_back(widths[i]);
+            } else {
+                tmp*=widths[i];
+                if(i==stop){
+                    new_width.push_back(tmp);
+                }
+            }
+        }
+
+        Tensor<T, rank - 1> a = Tensor<T, rank - 1>(new_width); //qui non conosciamo il rank a tempo di compilazione perchè dipende da start e width
+
+        // TODO opt
+        a.strides = cummult(new_width);
+        a.data = data;
+        a.offset = offset;
+
+        assert(data.get() != nullptr);
+        return a;
+    }
+
+    Tensor<T> multiFlatten(const size_t& start, const size_t& stop){  //estremi inclusi
+        assert(start >= 0 && start < widths.size());
+        assert(stop >= 0 && stop < widths.size());
+        // assert((stop-start) == 1);
 
         std::vector<size_t> new_width;
         size_t tmp=1;
@@ -156,14 +191,14 @@ public:
         return a;
     }
 
-    Tensor<T> window(const size_t& index, const size_t& start, const size_t& stop){
+    Tensor<T, rank> window(const size_t& index, const size_t& start, const size_t& stop){
         assert(stop > start);
         assert(widths[index] > stop);
         assert(start >= 0);
 
         //TODO gestire caso in cui genero un tensore di rank 0
 
-        Tensor<T> a = Tensor<T>(widths);
+        Tensor<T, rank> a = Tensor<T, rank>(widths);
 
         a.widths[index] = stop - start + 1;
         a.offset += a.strides[index] * start;
@@ -191,6 +226,8 @@ private:
 
 // tutti i tensori con dimensione non specificata staticamente vanno qui
 // ha gli stessi metodi di quello sopra
+///////////////////////TENSORE DINAMICO
+// inserire assert per controllare operazioni illecite
 template<class T>
 class Tensor<T,-1> {
 public:
@@ -386,6 +423,33 @@ public:
         return 0;
     }
 
+    T& operator()(initializer_list<size_t> indices){
+        assert(indices.size() == widths.size());
+
+        std::vector<size_t> indices_v = indices;
+        size_t tmp = 0;
+
+        for(size_t i=0; i< indices_v.size(); ++i){
+            assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
+            // cout << "stride: " << strides[i] << endl;
+            tmp += indices_v[i] * strides[i];
+            // cout << "value: " << tmp << endl;
+        }
+        tmp += offset;
+        // cout << "+tmp: " << tmp << endl;
+
+        // cout << tmp << endl;
+        assert(data.get() != nullptr);
+        assert(data.get()->size() == 36);
+
+        /*cout << "result:" << data.get()->size() << endl;
+        cout << "value:" << tmp << endl;
+        cout << "result:::::" << data.get()->at(tmp) << endl;*/
+
+        return (data.get()->at(tmp));
+        //return (*data)[tmp];      //versione alternativa
+    }
+
 private:
 
     // metadata : immutable
@@ -398,7 +462,7 @@ private:
 };
 
 // tensore di una dimensione, alias vettore, serve per la slice
-// non ha la slice e la flatten
+// non ha la flatten
 template<class T>
 class Tensor<T,1> {
 public:
@@ -406,7 +470,7 @@ public:
     template<typename, typename> friend class Tensor;
 
     // when the rank is not specified
-    Tensor<T>(std::initializer_list<size_t>&& a){
+    Tensor<T,1>(std::initializer_list<size_t>&& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
         //TODO decidere se rank può essere 0
 
@@ -421,7 +485,7 @@ public:
     }
 
     // when the rank is specified
-    Tensor<T>(const std::vector<size_t>& a){
+    Tensor<T,1>(const std::vector<size_t>& a){
         // cout << "costruttore : Tensor<T>(std::vector<size_t>& a)" << endl;
 
         widths = a;
@@ -429,7 +493,7 @@ public:
     }
 
     // copy constructor
-    Tensor<T>(const Tensor<T>& a){
+    Tensor<T,1>(const Tensor<T>& a){
         widths = a.widths;
         strides = a.strides;
         data = a.data;
@@ -446,7 +510,7 @@ public:
         }
     }
 
-    T operator()(initializer_list<size_t> indices){
+    T& operator()(initializer_list<size_t> indices){
         assert(indices.size() == widths.size());
 
         std::vector<size_t> indices_v = indices;
@@ -488,7 +552,7 @@ public:
         (*data)[tmp] = value;
     }
 
-    Tensor<T> window(const size_t& index, const size_t& start, const size_t& stop){
+    Tensor<T,1> window(const size_t& index, const size_t& start, const size_t& stop){
         assert(stop > start);
         assert(widths[index] > stop);
         assert(start >= 0);
@@ -500,6 +564,19 @@ public:
         a.widths[index] = stop - start + 1;
         a.offset += a.strides[index] * start;
 
+        assert(data.get() != nullptr);
+        return a;
+    }
+
+    Tensor<T,0> slice(const size_t&  index, const size_t& value){
+        assert(index >= 0 && index < widths.size());
+        assert(value >= 0 && value < widths[index]);
+
+        Tensor<T,1> a = Tensor<T, 1>();
+        a.widths = erase<size_t>(widths, index);
+        a.strides = erase<size_t>(strides, index);
+        a.offset += (strides[index] * value);
+        a.data = data;
         assert(data.get() != nullptr);
         return a;
     }
