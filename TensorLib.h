@@ -754,16 +754,15 @@ TensorIterator<T> operator+(int n, TensorIterator<T> iter){
     return iter + n;
 };
 
-/*
-template<class T>
+template<class T, int rank>
 class TensorIteratorFixed{
 public:
 
-    TensorIterator<T> (const Tensor<T>& tensor, const std::vector<size_t>& starting_indexes, const size_t& sliding_index) {
+    TensorIteratorFixed<T, rank>(const Tensor<T>& tensor, const std::vector<size_t>& starting_indexes, const size_t& sliding_index) {
         size_t indexes_size = starting_indexes.size();
         assert(indexes_size == tensor.widths.size());
 
-        assert(sliding_index >= 0 && sliding_index < indexes_size);
+        assert((sliding_index >= 0) && (sliding_index < indexes_size));
         for (size_t i = 0; i < indexes_size; i++){
             assert(starting_indexes[i] < tensor.widths[i] );
         }
@@ -775,7 +774,7 @@ public:
         this->index[sliding_index] = 0;
     }
 
-    TensorIterator<T>(const TensorIterator<T>& old_iterator) {
+    TensorIteratorFixed<T, rank>(const TensorIterator<T>& old_iterator) {
         this->tensor = old_iterator.tensor;
         this->indexes = old_iterator.indexes;
         this->sliding_index = old_iterator.sliding_index;
@@ -785,19 +784,19 @@ public:
         return this->tensor(this->indexes);
     }
 
-    //TODO se faccio il pointer di una reference funziona?
+/*    //TODO se faccio il pointer di una reference funziona?
     T* operator->() const {
         return &(this->tensor(this->indexes));
-    }
+    }*/
 
-    TensorIterator<T> operator++(int) {
+    TensorIteratorFixed<T, rank> operator++(int) {
         //TODO crea nuovo, incrementa me e ritorna l'altro
         TensorIterator<T> new_iterator = TensorIterator<T>(*this);
         increment(1);
         return new_iterator;
     }
 
-    TensorIterator<T>& operator++() {
+    TensorIteratorFixed<T, rank>& operator++() {
         //TODO incrementa me e ritorna la referenza
         increment(1);
         return this;
@@ -814,7 +813,7 @@ public:
 
 private:
 
-    Tensor<T>& tensor;
+    Tensor<T, rank>& tensor;
     std::vector<size_t> indexes;
     size_t sliding_index;
 
@@ -824,6 +823,5 @@ private:
         assert(this->indexes[sliding_index] >= this->tensor.widths[sliding_index]);
     }
 };
-*/
 
 #endif //TENSORLIB_TENSORLIB_H
