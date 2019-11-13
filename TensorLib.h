@@ -675,13 +675,14 @@ private:
 template<class T>
 TensorIterator<T> operator+(int n, TensorIterator<T> iter){
     return iter + n;
-}
+};
 
+/*
 template<class T>
 class TensorIteratorFixed{
 public:
 
-    TensorIterator<T>(const Tensor<T>& tensor, const std::vector<size_t>& starting_indexes, const size_t& sliding_index) {
+    TensorIterator<T> (const Tensor<T>& tensor, const std::vector<size_t>& starting_indexes, const size_t& sliding_index) {
         size_t indexes_size = starting_indexes.size();
         assert(indexes_size == tensor.widths.size());
 
@@ -745,6 +746,7 @@ private:
         //controllo overflow
         assert(this->indexes[sliding_index] >= this->tensor.widths[sliding_index]);
     }
-}
+};
+*/
 
 #endif //TENSORLIB_TENSORLIB_H
