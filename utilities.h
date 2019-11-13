@@ -2,6 +2,8 @@
 // Created by rr on 09/11/2019.
 //
 
+#include "TensorLib.h"
+
 #ifndef TENSORLIB_UTILITIES_H
 #define TENSORLIB_UTILITIES_H
 
