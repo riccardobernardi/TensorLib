@@ -10,6 +10,7 @@
 #include <type_traits>
 #include "utilities.h"
 #include <cstdarg>
+#include <math.h> 
 
 
 using namespace std;
@@ -351,14 +352,14 @@ private:
     std::shared_ptr<std::vector<T>> data;
 };
 
-
+//gli operatori di confronto danno sempre false se i tensori referenziati dagli iteratori non sono uguali
 template<class T>
 class TensorIterator {
 public:
 
     TensorIterator<T>(const Tensor<T>& tensor) {
         this->tensor = tensor;
-        indexes = std::vector<size_t>(this->tensor.widths.size(), 0);
+        indexes = std::vector<int>(this->tensor.widths.size(), 0);
     }
 
     TensorIterator<T>(const TensorIterator<T>& old_iterator) {
@@ -376,15 +377,28 @@ public:
     }
 
     TensorIterator<T> operator++(int) {
-        //TODO crea nuovo, incrementa me e ritorna l'altro
+        //crea nuovo, incrementa me e ritorna l'altro
         TensorIterator<T> new_iterator = TensorIterator<T>(*this);
         increment(1);
         return new_iterator;
     }
 
     TensorIterator<T>& operator++() {
-        //TODO incrementa me e ritorna la referenza
+        //incrementa me e ritorna la referenza
         increment(1);
+        return *this;
+    }
+
+    TensorIterator<T> operator--(int) {
+        //crea nuovo, decrementa me e ritorna l'altro
+        TensorIterator<T> new_iterator = TensorIterator<T>(*this);
+        increment(-1);
+        return new_iterator;
+    }
+
+    TensorIterator<T>& operator--() {
+        //decrementa me e ritorna la referenza
+        increment(-1);
         return *this;
     }
 
@@ -397,57 +411,92 @@ public:
     }
 
     TensorIterator<T>& operator+=(int inc) {
-        if (inc >= 0 ){
-            this.increment(inc);
-        } else {
-            //this.decrement(-inc)
-        }
-
+        this.increment(inc);
         return *this;
     }
 
     TensorIterator<T>& operator-=(int dec) {
-        if (dec <= 0 ){
-            this.increment(-dec);
-        } else {
-            //this.decrement(dec)
-        }
-
+        this.increment(-dec);
         return *this;
     }
 
-    TensorIterator<T> operator+(int inc) {
+    TensorIterator<T> operator+(int inc) const {
         TensorIterator<T> new_iterator = TensorIterator<T>(*this);
-        if (inc >= 0 ){
-            new_iterator.increment(inc);
-        } else {
-            //new_iterator.decrement(-inc)
-        }
-
+        new_iterator.increment(inc);
         return new_iterator;
     }
 
-    TensorIterator<T> operator-(int dec) {
+    TensorIterator<T> operator-(int dec) const {
         TensorIterator<T> new_iterator = TensorIterator<T>(*this);
-        if (dec < 0 ){
-            new_iterator.increment(-inc);
-        } else {
-            //new_iterator.decrement(inc)
-        }
-
+        new_iterator.increment(-dec);
         return new_iterator;
     }
 
-    //TODO <, >, <=, >=, decrement, iter - iter, direct access[], (n+iter)
+    T& operator[](int access_index) const {
+        std::vector<int> tmp_indexes = indexes;
+        indexes = std::vector<int>(indexes.size(), 0);
+        increment(access_index);
+        T& tmp_ret = tensor(indexes);
+        indexes = tmp_indexes;
+        return tmp_ret;
+    }
 
+    bool operator<(const TensorIterator<T>& other_iterator) const {
+        return (other_iterator.tensor == tensor && indexes < other_iterator.indexes);
+    }
 
+    bool operator>(const TensorIterator<T>& other_iterator) const {
+        return (other_iterator.tensor == tensor && indexes > other_iterator.indexes);
+    }
+
+    bool operator<=(const TensorIterator<T>& other_iterator) const {
+        return (other_iterator.tensor == tensor && indexes <= other_iterator.indexes);
+    }
+
+    bool operator>=(const TensorIterator<T>& other_iterator) const {
+        return (other_iterator.tensor == tensor && indexes >= other_iterator.indexes);
+    }
+
+    
+    int operator-(const TensorIterator<T>& other_iterator) const {
+        assert(other_iterator.tensor == tensor);
+        return (single_index() - other_iterator.single_index());
+    }
 
 private:
     Tensor<T>& tensor;
-    std::vector<size_t> indexes;
+    std::vector<int> indexes;
+    //con size_t non si può lavorare con valori negativi, a noi serve int perchè per il decremento degli indici li mettiamo temporaneamente negativi
 
-    void increment(const size_t& index_inc) {
-        size_t last_index = this->indexes.size() - 1;
+    int single_index() const {
+        size_t single_index = 0;
+        size_t acc_mult = 1;
+        for (size_t i = indexes.size()-1; i >= 0; i--){
+            single_index += indexes[i] * acc_mult;
+            acc_mult *= tensor.widths[i];
+        }
+        return single_index;
+    }
+
+    void increment(int index_inc) {
+        size_t i = indexes.size() - 1;
+        
+        indexes[i] += index_inc;
+        //rimani dentro finchè gli indici sono fuori dal range, cioè finche l'incremento deve propagarsi all'indice superiore
+        while ( i > 0 && (indexes[i] < 0 || indexes[i] >= tensor.widths[i]) ) {
+            if (indexes[i] < 0) {
+                // TODO controllare che la divisione funzioni, ed: divisione intera o no?
+                index_inc = ceil(indexes[i] / tensor.widths[i]); // numero di volte in cui viene attraversato (in negativo) l'intervallo dato dalla width = numero da decrementare all'indice a sinistra
+            } else {
+                index_inc = floor(indexes[i] / tensor.widths[i]);
+            }
+            indexes[i] = indexes[i] % tensor.width[i];
+            indexes[i-1] += index_inc;
+        }
+        //controllo overflow
+        assert( indexes[0] >= 0 && (indexes[0] >= tensor.widths[0]) );
+
+        /* vechia versione solo positiva
         this->indexes[last_index] += index_inc;
         for (size_t i = last_index; i > 0; i--) {
             //controllare che faccia divisione intera
@@ -456,9 +505,14 @@ private:
         }
         //controllo overflow
         assert(this->indexes[0] >= this->tensor.widths[0]);
+        */
     }
-
 };
+
+template<class T>
+TensorIterator<T> operator+(int n, TensorIterator<T> iter){
+    return iter + n;
+}
 
 template<class T>
 class TensorIteratorFixed{
