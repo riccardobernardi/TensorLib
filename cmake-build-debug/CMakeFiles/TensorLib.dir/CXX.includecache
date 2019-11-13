@@ -17,6 +17,8 @@ utilities.h
 /Users/rr/Git_repo/TensorLib/utilities.h
 cstdarg
 -
+math.h
+-
 
 /Users/rr/Git_repo/TensorLib/TestLib.h
 

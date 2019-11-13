@@ -16,7 +16,7 @@
 using namespace std;
 
 // TODO controlli sulla larghezza del vettore
-template<class T = int, size_t rank=0>
+template<class T = int, int rank=-1>
 class Tensor {
 public:
     // when the rank is not specified
@@ -186,10 +186,13 @@ private:
     Tensor<T, rank>() : widths(), strides(), data() {      //lo usiamo internamente per comodità (nelle slice/window), non ha senso di essere pubblico
         offset = 0;
     }
+
 };
 
+// tutti i tensori con dimensione non specificata staticamente vanno qui
+// ha gli stessi metodi di quello sopra
 template<class T>
-class Tensor<T,0> {
+class Tensor<T,-1> {
 public:
     // when the rank is not specified
     Tensor<T>(std::initializer_list<size_t>&& a){
@@ -222,6 +225,25 @@ public:
         offset = a.offset;
     }
 
+/*    // la costruzione è tipo Tensor<int> a()
+    // voglio ottenere Tensor<int,3> b = a
+    template<int rank>
+    Tensor<T>(const Tensor<T, rank>& a){
+        widths = a.widths;
+        strides = a.strides;
+        data = a.data;
+        offset = a.offset;
+    }*/
+
+/*    template<class S, int rank>
+    Tensor<S, rank> convert(){
+        Tensor<S,rank> a(widths);
+        a.strides = strides;
+        a.data = data;
+        a.offset = offset;
+        return a;
+    }*/
+
     // initialize with an array that will be represented as a tensor
     void initialize(std::initializer_list<T>&& a){
         if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
@@ -232,7 +254,7 @@ public:
         }
     }
 
-    T operator()(initializer_list<size_t> indices){
+    T& operator()(initializer_list<size_t> indices){
         assert(indices.size() == widths.size());
 
         std::vector<size_t> indices_v = indices;
@@ -323,6 +345,147 @@ public:
 
         assert(data.get() != nullptr);
         return a;
+    }
+
+    Tensor<T> window(const size_t& index, const size_t& start, const size_t& stop){
+        assert(stop > start);
+        assert(widths[index] > stop);
+        assert(start >= 0);
+
+        //TODO gestire caso in cui genero un tensore di rank 0
+
+        Tensor<T> a = Tensor<T>(widths);
+
+        a.widths[index] = stop - start + 1;
+        a.offset += a.strides[index] * start;
+
+        assert(data.get() != nullptr);
+        return a;
+    }
+
+private:
+
+    // metadata : immutable
+    std::vector<size_t> widths;
+    std::vector<size_t> strides;
+    size_t offset=0;
+
+    //data : mutable
+    std::shared_ptr<std::vector<T>> data;
+};
+
+// tensori caso speciale di dimensione 0, serve per la slice
+// non ha metodi se non rank() che torna 0
+template<class T>
+class Tensor<T,0> {
+public:
+
+    template<typename, typename> friend class Tensor;
+
+    size_t rank(){
+        return 0;
+    }
+
+private:
+
+    // metadata : immutable
+    std::vector<size_t> widths;
+    std::vector<size_t> strides;
+    size_t offset=0;
+
+    //data : mutable
+    std::shared_ptr<std::vector<T>> data;
+};
+
+// tensore di una dimensione, alias vettore, serve per la slice
+// non ha la slice e la flatten
+template<class T>
+class Tensor<T,1> {
+public:
+
+    template<typename, typename> friend class Tensor;
+
+    // when the rank is not specified
+    Tensor<T>(std::initializer_list<size_t>&& a){
+        // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
+        //TODO decidere se rank può essere 0
+
+        cout << "stiamop usando la spec" << endl;
+
+
+        widths = a;
+        strides = cummult(widths);
+        cout <<"www"<< widths[0] << endl;
+        cout <<"sss"<< strides[0] <<endl;
+        data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
+    }
+
+    // when the rank is specified
+    Tensor<T>(const std::vector<size_t>& a){
+        // cout << "costruttore : Tensor<T>(std::vector<size_t>& a)" << endl;
+
+        widths = a;
+        strides = cummult(widths);
+    }
+
+    // copy constructor
+    Tensor<T>(const Tensor<T>& a){
+        widths = a.widths;
+        strides = a.strides;
+        data = a.data;
+        offset = a.offset;
+    }
+
+    // initialize with an array that will be represented as a tensor
+    void initialize(std::initializer_list<T>&& a){
+        if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
+            data = make_shared<std::vector<T>>(a);
+        }else{
+            // cout << a.size() << data.get()->size() << endl;
+            cout << "Una volta inizializzato il vettore non può essere modificato nelle dimensioni!" << endl;
+        }
+    }
+
+    T operator()(initializer_list<size_t> indices){
+        assert(indices.size() == widths.size());
+
+        std::vector<size_t> indices_v = indices;
+        size_t tmp = 0;
+
+        for(size_t i=0; i< indices_v.size(); ++i){
+            assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
+            // cout << "stride: " << strides[i] << endl;
+            tmp += indices_v[i] * strides[i];
+            // cout << "value: " << tmp << endl;
+        }
+        tmp += offset;
+        // cout << "+tmp: " << tmp << endl;
+
+        // cout << tmp << endl;
+        assert(data.get() != nullptr);
+        assert(data.get()->size() == 36);
+
+        /*cout << "result:" << data.get()->size() << endl;
+        cout << "value:" << tmp << endl;
+        cout << "result:::::" << data.get()->at(tmp) << endl;*/
+
+        return (data.get()->at(tmp));
+        //return (*data)[tmp];      //versione alternativa
+    }
+
+    void set(initializer_list<size_t> indices, T& value){
+        assert(indices.size() == widths.size());
+
+        std::vector<size_t> indices_v = indices;
+        size_t tmp = 0;
+        for(size_t i=0; i< indices_v.size(); ++i){
+            assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
+            tmp += indices_v[i] * strides[i];
+        }
+
+        tmp += offset;
+
+        (*data)[tmp] = value;
     }
 
     Tensor<T> window(const size_t& index, const size_t& start, const size_t& stop){
@@ -512,13 +675,14 @@ private:
 template<class T>
 TensorIterator<T> operator+(int n, TensorIterator<T> iter){
     return iter + n;
-}
+};
 
+/*
 template<class T>
 class TensorIteratorFixed{
 public:
 
-    TensorIterator<T>(const Tensor<T>& tensor, const std::vector<size_t>& starting_indexes, const size_t& sliding_index) {
+    TensorIterator<T> (const Tensor<T>& tensor, const std::vector<size_t>& starting_indexes, const size_t& sliding_index) {
         size_t indexes_size = starting_indexes.size();
         assert(indexes_size == tensor.widths.size());
 
@@ -582,8 +746,7 @@ private:
         //controllo overflow
         assert(this->indexes[sliding_index] >= this->tensor.widths[sliding_index]);
     }
-}
-
-
+};
+*/
 
 #endif //TENSORLIB_TENSORLIB_H
