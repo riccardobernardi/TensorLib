@@ -660,6 +660,7 @@ public:
 private:
     Tensor<T>& ttensor;
     std::vector<int> indexes;
+    size_t sliding_index={};
     //con size_t non si può lavorare con valori negativi, a noi serve int perchè per il decremento degli indici li mettiamo temporaneamente negativi
 
     int single_index() const {
@@ -891,7 +892,7 @@ private:
 //              FIXED ITERATOR
 //##########################################################################
 
-template<class T, int rank>
+/*template<class T, int rank>
 class TensorIteratorFixed{
 public:
 
@@ -953,14 +954,13 @@ private:
     Tensor<T, rank>& ttensor;
     std::vector<size_t> indexes;
     size_t sliding_index={};
-    T* ptr=nullptr;
 
     void increment(const size_t& index_inc) {
         indexes[sliding_index] += index_inc;
         //controllo overflow
         assert(indexes[sliding_index] >= ttensor.widths[sliding_index]);
     }
-};
+};*/
 
 
 #endif //TENSORLIB_TENSORLIB_H
