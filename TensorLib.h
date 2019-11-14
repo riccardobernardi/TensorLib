@@ -38,7 +38,7 @@ template<class T = int, int rank=-1>
 class Tensor {
 public:
 
-    friend class TensorIterator<T>;
+/*    friend class TensorIterator<T>;
 
     TensorIterator<T> begin(){
         return TensorIterator<T>(*this).begin();
@@ -46,7 +46,7 @@ public:
 
     TensorIterator<T> end(){
         return TensorIterator<T>(*this).end();
-    }
+    }*/
 
     // when the rank is not specified
     Tensor<T,rank>(std::initializer_list<size_t>&& a){
@@ -268,6 +268,16 @@ public:
 
     TensorIterator<T> it(){
         return TensorIterator<T>(*this);
+    }
+
+    Tensor<T>& copy(){
+        Tensor<T> a(widths);
+        a.strides = strides;
+        a.offset = offset;
+        a.data = std::copy((*data).begin(), (*data).end());
+    }
+
+    ~Tensor(){
     }
 
     // when the rank is not specified
@@ -550,11 +560,11 @@ public:
     }
 
     TensorIterator<T>& begin(){
-        return this[0];
+        return (*this);
     }
 
     TensorIterator<T>& end(){
-        return this[ttensor.widths[0]*ttensor.strides[0]-1];
+        return (*this);
     }
 
 /*    TensorIterator<T>(const TensorIterator<T>& old_iterator) {

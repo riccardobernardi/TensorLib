@@ -215,6 +215,11 @@ void test_Tensor_iterator(){
     }
 }
 
+void test_Tensor_copy_forced(){
+    Tensor<int> a = Tensor<int>({1,2,3});
+    Tensor<int> b = a.copy();
+}
+
 int main() {
 
     Test t;
@@ -241,6 +246,7 @@ int main() {
     t.add(test_check_consistent_initialization_with_permitted_reinit,"test_check_consistent_initialization_with_permitted_reinit");
     t.add(test_Tensor_constructor_despec,"test_Tensor_constructor_despec");
     t.add(test_Tensor_iterator,"test_Tensor_iterator");
+    t.add(test_Tensor_copy_forced,"test_Tensor_copy_forced");
     t.launch_test(-1);
     //t.launch_test(13);
 
