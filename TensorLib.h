@@ -116,8 +116,8 @@ public:
         }
         tmp += offset;
 
-        assert(data.get() != nullptr);
-        return (data.get()->at(tmp));
+        assert(data);
+        return ((*data)[tmp]);
     }
 
     //questo lo teniamo però anche l'operatore parentesi può essere usato per settare
@@ -139,10 +139,6 @@ public:
     Tensor<T, rank - 1> slice(const size_t&  index, const size_t& value){
         assert(index >= 0 && index < widths.size());
         assert(value >= 0 && value < widths[index]);
-        
-        if(rank == 1){
-            //TODO caso particolare in cui si crea un tensore di rango 0
-        }
         
         Tensor<T, rank - 1> a = Tensor<T, rank - 1>();
         a.widths = erase<size_t>(widths, index);
