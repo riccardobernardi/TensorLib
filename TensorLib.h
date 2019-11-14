@@ -38,20 +38,33 @@ template<class T = int, int rank=-1>
 class Tensor {
 public:
 
-/*    friend class TensorIterator<T>;
+    friend class TensorIterator<T, rank>;
 
-    TensorIterator<T> begin(){
-        return TensorIterator<T>(*this).begin();
-    }
-
-    TensorIterator<T> end(){
-        return TensorIterator<T>(*this).end();
+    /*TensorIterator<T, -1> it(){
+        return TensorIterator<T, -1>(*this);
     }*/
 
-    // when the rank is not specified
-    Tensor<T,rank>(std::initializer_list<size_t>&& a){
+    TensorIterator<T, rank> begin(){
+        std::vector<int> ind(widths.size(), 0);
+        return TensorIterator<T,rank>(*this,ind);
+    }
+
+    TensorIterator<T, rank> end(){
+        std::vector<int> ind(widths.size(), 0);
+        ind.at(0) = widths[0];
+        return TensorIterator<T,rank>(*this,ind);
+    }
+
+    Tensor<T, rank> copy(){
+        Tensor<T, rank> a(widths);
+        a.strides = strides;
+        a.offset = offset;
+        a.data = make_shared<std::vector<T>>(*data);
+        return a;
+    }
+
+    Tensor<T,rank>(std::initializer_list<size_t> a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
-        //TODO decidere se rank può essere 0
         assert(a.size()==rank);
 
         cout << "sto usando il generico con valore rank:" << rank << endl;
@@ -61,31 +74,23 @@ public:
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
-    // when the rank is specified
-/*
-    Tensor<T,rank>(const std::vector<size_t>& a){
-        // cout << "costruttore : Tensor<T>(std::vector<size_t>& a)" << endl;
+
+    Tensor<T,rank>(std::initializer_list<size_t>& a){
+        // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
         assert(a.size()==rank);
+
+        cout << "sto usando il generico con valore rank:" << rank << endl;
+
         widths = a;
         strides = cummult(widths);
+        data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
-*/
 
     // copy constructor
-    Tensor<T, rank>(const Tensor<T, rank>& a){
-        widths = a.widths;
-        strides = a.strides;
-        data = a.data;
-        offset = a.offset;
-    }
+    Tensor<T, rank>(const Tensor<T, rank>& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){}
 
     //move constructor, se forniamo il move constructor dobbiamo permettere di reinserire il vettore di dati, infatti il tensore che viene passato come parametro al move constructor rimarrà vuoto.
-    Tensor<T, rank>(Tensor<T, rank>&& a){
-        widths = a.widths;
-        strides = a.strides;
-        data = a.data;
-        offset = a.offset;
-
+    Tensor<T, rank>(Tensor<T, rank>&& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){
         a.widths = std::vector<size_t>();
         a.strides = std::vector<size_t>();
         a.data = std::shared_ptr<std::vector<T>>();             //non è necessario fare altre operazioni sul vecchio shared_pointer (per fare in modo che decrementi il contatore di pointers attivi)
@@ -93,13 +98,9 @@ public:
     }
 
     // initialize with an array that will be represented as a ttensor
-    void initialize(std::initializer_list<T>&& a){
-        if ( (data.get() == nullptr) || (a.size() == data.get()->size()) ){
-            data = make_shared<std::vector<T>>(a);
-        }else{
-            // cout << a.size() << data.get()->size() << endl;
-            cout << "Una volta inizializzato il vettore non può essere modificato nelle dimensioni!" << endl;
-        }
+    void initialize(std::initializer_list<T>& a){
+        assert((data) && (a.size() == (*data).size()));
+        data = make_shared<std::vector<T>>(a);
     }
 
     //ritornando la reference si lascia la possibilità di settare il valore dell'elemento ritornato
@@ -281,7 +282,7 @@ public:
         return TensorIterator<T,-1>(*this,ind);
     }
 
-    Tensor<T> copy(){
+    Tensor<T, -1> copy(){
         Tensor<T, -1> a(widths);
         a.strides = strides;
         a.offset = offset;
@@ -289,21 +290,18 @@ public:
         return a;
     };
 
-    ~Tensor(){
-    }
-
     // when the rank is not specified
     Tensor<T>(std::initializer_list<size_t>&& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
         //TODO decidere se rank può essere 0
 
-        cout << "stiamop usando la spec" << endl;
+        // cout << "stiamop usando la spec" << endl;
 
 
         widths = a;
         strides = cummult(widths);
-        cout <<"www"<< widths[0] << endl;
-        cout <<"sss"<< strides[0] <<endl;
+        // cout <<"www"<< widths[0] << endl;
+        // cout <<"sss"<< strides[0] <<endl;
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
@@ -385,12 +383,8 @@ public:
         std::vector<int> indices_v = indices;
         size_t tmp = 0;
 
-        for(auto i : indices_v){
-            cout << "index problemssssss: " << i << endl;
-        }
-
         for(size_t i=0; i< indices_v.size(); ++i){
-            cout << "index problem: " << i << endl;
+            // cout << "index problem: " << i << endl;
 
             assert(indices_v[i] < widths[i] && indices_v[i] >= 0 );
             // cout << "stride: " << strides[i] << endl;
@@ -701,7 +695,7 @@ private:
         
         indexes[i] += index_inc;
         //rimani dentro finchè gli indici sono fuori dal range, cioè finche l'incremento deve propagarsi all'indice superiore
-        while ( i > 0 && (indexes[i] < 0 || indexes[i] >= ttensor.widths[i]) ) {
+        while ( i > 0 && ((indexes[i] < 0) || (indexes[i] >= ttensor.widths[i])) ) {
             if (indexes[i] < 0) {
                 // TODO controllare che la divisione funzioni, ed: divisione intera o no?
                 index_inc = ceil(indexes[i] / ttensor.widths[i]); // numero di volte in cui viene attraversato (in negativo) l'intervallo dato dalla width = numero da decrementare all'indice a sinistra
@@ -710,6 +704,7 @@ private:
             }
             indexes[i] = indexes[i] % ttensor.widths[i];
             indexes[i-1] += index_inc;
+            --i;
         }
         //controllo overflow
 
@@ -758,13 +753,13 @@ public:
         // cout << "costruttore : Tensor<T, rank>(std::initializer_list<size_t>&& a)" << endl;
         //TODO decidere se rank può essere 0
 
-        cout << "stiamop usando la spec" << endl;
+        // cout << "stiamop usando la spec" << endl;
 
 
         widths = a;
         strides = cummult(widths);
-        cout <<"www"<< widths[0] << endl;
-        cout <<"sss"<< strides[0] <<endl;
+        // cout <<"www"<< widths[0] << endl;
+        // cout <<"sss"<< strides[0] <<endl;
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
@@ -813,9 +808,9 @@ public:
         assert(data.get() != nullptr);
         assert(data.get()->size() == 36);
 
-        cout << "result:" << data.get()->size() << endl;
+        /*cout << "result:" << data.get()->size() << endl;
         cout << "value:" << tmp << endl;
-        cout << "result:::::" << data.get()->at(tmp) << endl;
+        cout << "result:::::" << data.get()->at(tmp) << endl;*/
 
         return (data.get()->at(tmp));
         //return (*data)[tmp];      //versione alternativa
