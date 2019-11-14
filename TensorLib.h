@@ -18,14 +18,14 @@ using namespace std;
 //              dichiarazioni
 //##########################################################################
 
-template<class T>
+template<class T, int rank>
 class TensorIterator;
 
 template<class T, int rank>
 class TensorIteratorFixed;
 
-template<class T>
-TensorIterator<T> operator+(int n, TensorIterator<T> iter){
+template<class T, int rank>
+TensorIterator<T, rank> operator+(int n, TensorIterator<T, rank> iter){
     return iter + n;
 };
 
@@ -264,14 +264,25 @@ private:
 template<class T>
 class Tensor<T,-1> {
 public:
-    friend class TensorIterator<T>;
+    friend class TensorIterator<T, -1>;
 
-    TensorIterator<T> it(){
-        return TensorIterator<T>(*this);
+    /*TensorIterator<T, -1> it(){
+        return TensorIterator<T, -1>(*this);
+    }*/
+
+    TensorIterator<T, -1> begin(){
+        std::vector<int> ind(widths.size(), 0);
+        return TensorIterator<T,-1>(*this,ind);
+    }
+
+    TensorIterator<T, -1> end(){
+        std::vector<int> ind(widths.size(), 0);
+        ind.at(0) = widths[0];
+        return TensorIterator<T,-1>(*this,ind);
     }
 
     Tensor<T> copy(){
-        Tensor<T> a(widths);
+        Tensor<T, -1> a(widths);
         a.strides = strides;
         a.offset = offset;
         a.data = make_shared<std::vector<T>>(*data);
@@ -374,8 +385,14 @@ public:
         std::vector<int> indices_v = indices;
         size_t tmp = 0;
 
+        for(auto i : indices_v){
+            cout << "index problemssssss: " << i << endl;
+        }
+
         for(size_t i=0; i< indices_v.size(); ++i){
-            assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
+            cout << "index problem: " << i << endl;
+
+            assert(indices_v[i] < widths[i] && indices_v[i] >= 0 );
             // cout << "stride: " << strides[i] << endl;
             tmp += indices_v[i] * strides[i];
             // cout << "value: " << tmp << endl;
@@ -552,21 +569,15 @@ private:
 //##########################################################################
 
 //gli operatori di confronto danno sempre false se i tensori referenziati dagli iteratori non sono uguali
-template<class T>
+template<class T, int rank>
 class TensorIterator {
 public:
 
-    TensorIterator<T>(Tensor<T>& tensor) : ttensor(tensor) {
+    TensorIterator<T, rank>(Tensor<T, rank>& tensor) : ttensor(tensor) {
         indexes = std::vector<int>(ttensor.widths.size(), 0);
     }
 
-    TensorIterator<T> begin(){
-        return (*this);
-    }
-
-    TensorIterator<T> end(){
-        return (*this)+(ttensor.widths[0]*ttensor.strides[0]);
-    }
+    TensorIterator<T, rank>(Tensor<T, rank>& tensor, std::vector<int>& starting_indexes) : indexes(starting_indexes), ttensor(tensor){}
 
 /*    TensorIterator<T>(const TensorIterator<T>& old_iterator) {
         ttensor = old_iterator.ttensor;
@@ -582,58 +593,59 @@ public:
         return &(ttensor(indexes));
     }
 
-    TensorIterator<T> operator++(int) {
+    TensorIterator<T, rank> operator++(int) {
         //crea nuovo, incrementa me e ritorna l'altro
-        TensorIterator<T> new_iterator = TensorIterator<T>(*this);
+        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
         increment(1);
         return new_iterator;
     }
 
-    TensorIterator<T>& operator++() {
+    TensorIterator<T, rank>& operator++() {
         //incrementa me e ritorna la referenza
         increment(1);
         return *this;
     }
 
-    TensorIterator<T> operator--(int) {
+    TensorIterator<T, rank> operator--(int) {
         //crea nuovo, decrementa me e ritorna l'altro
-        TensorIterator<T> new_iterator = TensorIterator<T>(*this);
+        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
         increment(-1);
         return new_iterator;
     }
 
-    TensorIterator<T>& operator--() {
+    TensorIterator<T, rank>& operator--() {
         //decrementa me e ritorna la referenza
         increment(-1);
         return *this;
     }
 
-    bool operator==(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.ttensor == ttensor && other_iterator.indexes == indexes);
+    //TODO check delle references dei tensori che abbiano stesso indirizzo
+    bool operator==(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == ttensor && &other_iterator.indexes == indexes);
     }
 
-    bool operator!=(const TensorIterator<T>& other_iterator) const {
-        return (/*other_iterator.ttensor != ttensor ||*/ other_iterator.indexes != indexes);
+    bool operator!=(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == &ttensor && other_iterator.indexes != indexes);
     }
 
-    TensorIterator<T>& operator+=(int inc) {
+    TensorIterator<T, rank>& operator+=(int inc) {
         increment(inc);
         return *this;
     }
 
-    TensorIterator<T>& operator-=(int dec) {
+    TensorIterator<T, rank>& operator-=(int dec) {
         increment(-dec);
         return *this;
     }
 
-    TensorIterator<T> operator+(int inc) const {
-        TensorIterator<T> new_iterator = TensorIterator<T>(*this);
+    TensorIterator<T, rank> operator+(int inc) const {
+        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
         new_iterator.increment(inc);
         return new_iterator;
     }
 
-    TensorIterator<T> operator-(int dec) const {
-        TensorIterator<T> new_iterator = TensorIterator<T>(*this);
+    TensorIterator<T, rank> operator-(int dec) const {
+        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
         new_iterator.increment(-dec);
         return new_iterator;
     }
@@ -647,29 +659,29 @@ public:
         return tmp_ret;
     }
 
-    bool operator<(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.ttensor == ttensor && indexes < other_iterator.indexes);
+    bool operator<(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == &ttensor && indexes < other_iterator.indexes);
     }
 
-    bool operator>(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.ttensor == ttensor && indexes > other_iterator.indexes);
+    bool operator>(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == &ttensor && indexes > other_iterator.indexes);
     }
 
-    bool operator<=(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.ttensor == ttensor && indexes <= other_iterator.indexes);
+    bool operator<=(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == &ttensor && indexes <= other_iterator.indexes);
     }
 
-    bool operator>=(const TensorIterator<T>& other_iterator) const {
-        return (other_iterator.ttensor == ttensor && indexes >= other_iterator.indexes);
+    bool operator>=(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == &ttensor && indexes >= other_iterator.indexes);
     }
 
-    int operator-(const TensorIterator<T>& other_iterator) const {
-        assert(other_iterator.ttensor == ttensor);
+    int operator-(const TensorIterator<T, rank>& other_iterator) const {
+        assert(&other_iterator.ttensor == &ttensor);
         return (single_index() - other_iterator.single_index());
     }
 
 private:
-    Tensor<T>& ttensor;
+    Tensor<T, rank>& ttensor;
     std::vector<int> indexes;
     size_t sliding_index={};
     //con size_t non si può lavorare con valori negativi, a noi serve int perchè per il decremento degli indici li mettiamo temporaneamente negativi
@@ -714,7 +726,7 @@ private:
         ////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////
-        assert( indexes[0] >= 0 && (indexes[0] < ttensor.widths[0]) );
+        // assert( indexes[0] >= 0 && (indexes[0] < ttensor.widths[0]) );
 
         /* vechia versione solo positiva
         this->indexes[last_index] += index_inc;
@@ -732,55 +744,6 @@ private:
 //##########################################################################
 //              specializzazioni
 //##########################################################################
-// tensori caso speciale di dimensione 0, serve per la slice
-// non ha metodi se non rank() che torna 0
-template<class T>
-class Tensor<T,0> {
-public:
-
-    template<typename, typename> friend class Tensor;
-
-    size_t rank(){
-        return 0;
-    }
-
-    T& operator()(initializer_list<size_t> indices){
-        assert(indices.size() == widths.size());
-
-        std::vector<size_t> indices_v = indices;
-        size_t tmp = 0;
-
-        for(size_t i=0; i< indices_v.size(); ++i){
-            assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
-            // cout << "stride: " << strides[i] << endl;
-            tmp += indices_v[i] * strides[i];
-            // cout << "value: " << tmp << endl;
-        }
-        tmp += offset;
-        // cout << "+tmp: " << tmp << endl;
-
-        // cout << tmp << endl;
-        assert(data.get() != nullptr);
-        assert(data.get()->size() == 36);
-
-        cout << "result:" << data.get()->size() << endl;
-        cout << "value:" << tmp << endl;
-        cout << "result:::::" << data.get()->at(tmp) << endl;
-
-        return (data.get()->at(tmp));
-        //return (*data)[tmp];      //versione alternativa
-    }
-
-private:
-
-    // metadata : immutable
-    std::vector<size_t> widths;
-    std::vector<size_t> strides;
-    size_t offset=0;
-
-    //data : mutable
-    std::shared_ptr<std::vector<T>> data;
-};
 
 // tensore di una dimensione, alias vettore, serve per la slice
 // non ha la flatten
@@ -792,7 +755,7 @@ public:
 
     // when the rank is not specified
     Tensor<T,1>(std::initializer_list<size_t>&& a){
-        // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
+        // cout << "costruttore : Tensor<T, rank>(std::initializer_list<size_t>&& a)" << endl;
         //TODO decidere se rank può essere 0
 
         cout << "stiamop usando la spec" << endl;
@@ -885,19 +848,6 @@ public:
         a.widths[index] = stop - start + 1;
         a.offset += a.strides[index] * start;
 
-        assert(data.get() != nullptr);
-        return a;
-    }
-
-    Tensor<T,0> slice(const size_t&  index, const size_t& value){
-        assert(index >= 0 && index < widths.size());
-        assert(value >= 0 && value < widths[index]);
-
-        Tensor<T,1> a = Tensor<T, 1>();
-        a.widths = erase<size_t>(widths, index);
-        a.strides = erase<size_t>(strides, index);
-        a.offset += (strides[index] * value);
-        a.data = data;
         assert(data.get() != nullptr);
         return a;
     }
