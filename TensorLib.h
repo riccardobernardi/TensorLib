@@ -270,12 +270,13 @@ public:
         return TensorIterator<T>(*this);
     }
 
-    Tensor<T>& copy(){
+    Tensor<T> copy(){
         Tensor<T> a(widths);
         a.strides = strides;
         a.offset = offset;
-        a.data = std::copy((*data).begin(), (*data).end());
-    }
+        a.data = make_shared<std::vector<T>>(*data);
+        return a;
+    };
 
     ~Tensor(){
     }
@@ -559,12 +560,12 @@ public:
         indexes = std::vector<int>(ttensor.widths.size(), 0);
     }
 
-    TensorIterator<T>& begin(){
+    TensorIterator<T> begin(){
         return (*this);
     }
 
-    TensorIterator<T>& end(){
-        return (*this);
+    TensorIterator<T> end(){
+        return (*this)+(ttensor.widths[0]*ttensor.strides[0]);
     }
 
 /*    TensorIterator<T>(const TensorIterator<T>& old_iterator) {
@@ -699,7 +700,21 @@ private:
             indexes[i-1] += index_inc;
         }
         //controllo overflow
-        assert( indexes[0] >= 0 && (indexes[0] >= ttensor.widths[0]) );
+
+
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////
+        assert( indexes[0] >= 0 && (indexes[0] < ttensor.widths[0]) );
 
         /* vechia versione solo positiva
         this->indexes[last_index] += index_inc;
