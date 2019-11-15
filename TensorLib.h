@@ -18,39 +18,40 @@ using namespace std;
 //              dichiarazioni
 //##########################################################################
 
-template<class T, int rank>
+template<class T, size_t rank>
 class TensorIterator;
 
-template<class T, int rank>
+template<class T, size_t rank>
 class TensorIteratorFixed;
 
-template<class T, int rank>
-TensorIterator<T, rank> operator+(int n, TensorIterator<T, rank> iter){
+template<class T, size_t rank>
+TensorIterator<T, rank> operator+(size_t n, TensorIterator<T, rank> iter){
+    return iter + n;
+};
+
+template<class T, size_t rank>
+TensorIteratorFixed<T, rank> operator+(size_t n, TensorIteratorFixed<T, rank> iter){
     return iter + n;
 };
 
 //##########################################################################
-//              T. RANK PRECISO
+//              TENSORE FISSO
 //##########################################################################
 
 // TODO controlli sulla larghezza del vettore
-template<class T = int, int rank=-1>
+template<class T = size_t, size_t rank=0>
 class Tensor {
 public:
 
     friend class TensorIterator<T, rank>;
 
-    /*TensorIterator<T, -1> it(){
-        return TensorIterator<T, -1>(*this);
-    }*/
-
     TensorIterator<T, rank> begin(){
-        std::vector<int> ind(widths.size(), 0);
+        std::vector<size_t> ind(widths.size(), 0);
         return TensorIterator<T,rank>(*this,ind);
     }
 
     TensorIterator<T, rank> end(){
-        std::vector<int> ind(widths.size(), 0);
+        std::vector<size_t> ind(widths.size(), 0);
         ind.at(0) = widths[0];
         return TensorIterator<T,rank>(*this,ind);
     }
@@ -73,7 +74,6 @@ public:
         strides = cummult(widths);
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
-
 
     Tensor<T,rank>(std::initializer_list<size_t>& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
@@ -149,19 +149,14 @@ public:
         return a;
     }
 
-    Tensor<T, rank - 1> flatten(const size_t& start, const size_t& stop){  //estremi inclusi
-        assert(start >= 0 && start < widths.size());
-        assert(stop >= 0 && stop < widths.size());
-        assert((stop-start) == 1);
-
+    Tensor<T, rank - 1> flatten(const size_t& start){  //flatten tra start e start+1
+        assert(start >= 0 && start < widths.size()-1);
+        //TODO serve?
+        assert(data);
         std::vector<size_t> new_width;
         size_t tmp=1;
-
-        if ( (rank - (stop - start +1)) == 0 ){
-            //TODO caso in cui il risultante è un tensore di grado 0 o 1
-        }
-
-        for(int i=0;i<widths.size();++i){
+        size_t stop = start + 1;
+        for(int i=0; i<widths.size(); ++i){
             if (i<start || i>stop) {
                 new_width.push_back(widths[i]);
             } else {
@@ -172,14 +167,11 @@ public:
             }
         }
 
-        Tensor<T, rank - 1> a = Tensor<T, rank - 1>(new_width); //qui non conosciamo il rank a tempo di compilazione perchè dipende da start e width
+        Tensor<T, rank - 1> a = Tensor<T, rank - 1>(new_width);
 
-        // TODO opt
         a.strides = cummult(new_width);
         a.data = data;
         a.offset = offset;
-
-        assert(data.get() != nullptr);
         return a;
     }
 
@@ -195,7 +187,7 @@ public:
             //TODO caso in cui il risultante è un tensore di grado 0 o 1
         }
 
-        for(int i=0;i<widths.size();++i){
+        for(size_t i=0;i<widths.size();++i){
             if (i<start || i>stop) {
                 new_width.push_back(widths[i]);
             } else {
@@ -251,7 +243,7 @@ private:
 };
 
 //##########################################################################
-//              T. RANK ARBITRARIO NON STATICO!!!!
+//              TENSORE DINAMICO
 //##########################################################################
 
 // tutti i tensori con dimensione non specificata staticamente vanno qui
@@ -259,27 +251,23 @@ private:
 ///////////////////////TENSORE DINAMICO
 // inserire assert per controllare operazioni illecite
 template<class T>
-class Tensor<T,-1> {
+class Tensor<T,0> {
 public:
-    friend class TensorIterator<T, -1>;
+    friend class TensorIterator<T, 0>;
 
-    /*TensorIterator<T, -1> it(){
-        return TensorIterator<T, -1>(*this);
-    }*/
-
-    TensorIterator<T, -1> begin(){
-        std::vector<int> ind(widths.size(), 0);
-        return TensorIterator<T,-1>(*this,ind);
+    TensorIterator<T, 0> begin(){
+        std::vector<size_t> ind(widths.size(), 0);
+        return TensorIterator<T, 0>(*this,ind);
     }
 
-    TensorIterator<T, -1> end(){
-        std::vector<int> ind(widths.size(), 0);
+    TensorIterator<T, 0> end(){
+        std::vector<size_t> ind(widths.size(), 0);
         ind.at(0) = widths[0];
-        return TensorIterator<T,-1>(*this,ind);
+        return TensorIterator<T, 0>(*this,ind);
     }
 
-    Tensor<T, -1> copy(){
-        Tensor<T, -1> a(widths);
+    Tensor<T, 0> copy(){
+        Tensor<T, 0> a(widths);
         a.strides = strides;
         a.offset = offset;
         a.data = make_shared<std::vector<T>>(*data);
@@ -316,25 +304,6 @@ public:
         data = a.data;
         offset = a.offset;
     }
-
-/*    // la costruzione è tipo Tensor<int> a()
-    // voglio ottenere Tensor<int,3> b = a
-    template<int rank>
-    Tensor<T>(const Tensor<T, rank>& a){
-        widths = a.widths;
-        strides = a.strides;
-        data = a.data;
-        offset = a.offset;
-    }*/
-
-/*    template<class S, int rank>
-    Tensor<S, rank> convert(){
-        Tensor<S,rank> a(widths);
-        a.strides = strides;
-        a.data = data;
-        a.offset = offset;
-        return a;
-    }*/
 
     // initialize with an array that will be represented as a ttensor
     void initialize(std::initializer_list<T>&& a){
@@ -373,10 +342,10 @@ public:
         //return (*data)[tmp];      //versione alternativa
     }
 
-    T& operator()(vector<int> indices){
+    T& operator()(vector<size_t> indices){
         assert(indices.size() == widths.size());
 
-        std::vector<int> indices_v = indices;
+        std::vector<size_t> indices_v = indices;
         size_t tmp = 0;
 
         for(size_t i=0; i< indices_v.size(); ++i){
@@ -475,7 +444,37 @@ public:
         size_t tmp=1;
 
 
-        for(int i=0;i<widths.size();++i){
+        for(size_t i=0;i<widths.size();++i){
+            if (i<start || i>stop) {
+                new_width.push_back(widths[i]);
+            } else {
+                tmp*=widths[i];
+                if(i==stop){
+                    new_width.push_back(tmp);
+                }
+            }
+        }
+
+        Tensor<T> a = Tensor<T>(new_width); //qui non conosciamo il rank a tempo di compilazione perchè dipende da start e width
+
+        // TODO opt
+        a.strides = cummult(new_width);
+        a.data = data;
+        a.offset = offset;
+
+        assert(data.get() != nullptr);
+        return a;
+    }
+
+    Tensor<T> multiFlatten(const size_t& start, const size_t& stop){  //estremi inclusi
+        assert(start >= 0 && start < widths.size());
+        assert(stop >= 0 && stop < widths.size());
+        // assert((stop-start) == 1);
+
+        std::vector<size_t> new_width;
+        size_t tmp=1;
+
+        for(size_t i=0;i<widths.size();++i){
             if (i<start || i>stop) {
                 new_width.push_back(widths[i]);
             } else {
@@ -524,50 +523,20 @@ private:
     std::shared_ptr<std::vector<T>> data;
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //##########################################################################
-//              ITERATORE T. RANK ARBITRARIO NON STATICO!!!!
+//              ITERATORE RANDOM ACCESS
 //##########################################################################
 
 //gli operatori di confronto danno sempre false se i tensori referenziati dagli iteratori non sono uguali
-template<class T, int rank>
+template<class T, size_t rank>
 class TensorIterator {
 public:
 
     TensorIterator<T, rank>(Tensor<T, rank>& tensor) : ttensor(tensor) {
-        indexes = std::vector<int>(ttensor.widths.size(), 0);
+        indexes = std::vector<size_t>(ttensor.widths.size(), 0);
     }
 
-    TensorIterator<T, rank>(Tensor<T, rank>& tensor, std::vector<int>& starting_indexes) : indexes(starting_indexes), ttensor(tensor){}
+    TensorIterator<T, rank>(Tensor<T, rank>& tensor, std::vector<size_t>& starting_indexes) : indexes(starting_indexes), ttensor(tensor){}
 
 /*    TensorIterator<T>(const TensorIterator<T>& old_iterator) {
         ttensor = old_iterator.ttensor;
@@ -618,31 +587,31 @@ public:
         return (&other_iterator.ttensor == &ttensor && other_iterator.indexes != indexes);
     }
 
-    TensorIterator<T, rank>& operator+=(int inc) {
+    TensorIterator<T, rank>& operator+=(size_t inc) {
         increment(inc);
         return *this;
     }
 
-    TensorIterator<T, rank>& operator-=(int dec) {
+    TensorIterator<T, rank>& operator-=(size_t dec) {
         increment(-dec);
         return *this;
     }
 
-    TensorIterator<T, rank> operator+(int inc) const {
+    TensorIterator<T, rank> operator+(size_t inc) const {
         TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
         new_iterator.increment(inc);
         return new_iterator;
     }
 
-    TensorIterator<T, rank> operator-(int dec) const {
+    TensorIterator<T, rank> operator-(size_t dec) const {
         TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
         new_iterator.increment(-dec);
         return new_iterator;
     }
 
-    T& operator[](int access_index) const {
-        std::vector<int> tmp_indexes = indexes;
-        indexes = std::vector<int>(indexes.size(), 0);
+    T& operator[](size_t access_index) const {
+        std::vector<size_t> tmp_indexes = indexes;
+        indexes = std::vector<size_t>(indexes.size(), 0);
         increment(access_index);
         T& tmp_ret = ttensor(indexes);
         indexes = tmp_indexes;
@@ -665,18 +634,18 @@ public:
         return (&other_iterator.ttensor == &ttensor && indexes >= other_iterator.indexes);
     }
 
-    int operator-(const TensorIterator<T, rank>& other_iterator) const {
+    size_t operator-(const TensorIterator<T, rank>& other_iterator) const {
         assert(&other_iterator.ttensor == &ttensor);
         return (single_index() - other_iterator.single_index());
     }
 
 private:
     Tensor<T, rank>& ttensor;
-    std::vector<int> indexes;
+    std::vector<size_t> indexes;
     size_t sliding_index={};
     //con size_t non si può lavorare con valori negativi, a noi serve int perchè per il decremento degli indici li mettiamo temporaneamente negativi
 
-    int single_index() const {
+    size_t single_index() const {
         size_t single_index = 0;
         size_t acc_mult = 1;
         for (size_t i = indexes.size()-1; i >= 0; i--){
@@ -686,7 +655,7 @@ private:
         return single_index;
     }
 
-    void increment(int index_inc) {
+    void increment(size_t index_inc) {
         size_t i = indexes.size() - 1;
         
         indexes[i] += index_inc;
@@ -855,10 +824,10 @@ private:
 };
 
 //##########################################################################
-//              FIXED ITERATOR
+//              ITERATORE SU ARRAY FISSATO
 //##########################################################################
 
-/*template<class T, int rank>
+template<class T, size_t rank>
 class TensorIteratorFixed{
 public:
 
@@ -926,7 +895,7 @@ private:
         //controllo overflow
         assert(indexes[sliding_index] >= ttensor.widths[sliding_index]);
     }
-};*/
+};
 
 
 #endif //TENSORLIB_TENSORLIB_H
