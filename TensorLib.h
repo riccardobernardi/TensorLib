@@ -89,6 +89,17 @@ public:
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
+    Tensor<T,rank>(std::vector<size_t> a){
+        // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
+        assert(a.size()==rank);
+
+        cout << "sto usando il generico con valore rank:" << rank << endl;
+
+        widths = a;
+        strides = cummult(widths);
+        data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
+    }
+
     //TODO secondo cek bisogna toglierla
     Tensor<T,rank>(std::initializer_list<size_t>& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
@@ -118,7 +129,7 @@ public:
     //costruttore che prende width e data
 
     Tensor<T>(std::initializer_list<size_t>& a, std::vector<T> new_data) {
-        assert(a.size() > 0 && new_data.size() == mult(a));
+        assert(a.size() > 0 && new_data.size() == mult<T>(a));
 
         widths = a;
         strides = cummult(widths);
@@ -148,6 +159,34 @@ public:
         tmp += offset;
 
         return ((*data)[tmp]);
+    }
+
+    T& operator()(vector<int> indices_v){
+        assert(indices_v.size() == widths.size());
+
+        size_t tmp = 0;
+
+        for(size_t i=0; i< indices_v.size(); ++i){
+            assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
+            // cout << "stride: " << strides[i] << endl;
+            tmp += indices_v[i] * strides[i];
+            // cout << "value: " << tmp << endl;
+        }
+        tmp += offset;
+        // cout << "+tmp: " << tmp << endl;
+
+        // cout << tmp << endl;
+        assert(data);
+
+        //TODO WTF?
+        //assert(data.get()->size() == 36);
+
+        /*cout << "result:" << data.get()->size() << endl;
+        cout << "value:" << tmp << endl;
+        cout << "result:::::" << data.get()->at(tmp) << endl;*/
+
+        return (*data)[tmp];
+        //return (*data)[tmp];      //versione alternativa
     }
 
     //questo lo teniamo però anche l'operatore parentesi può essere usato per settare
@@ -287,7 +326,7 @@ class Tensor<T,0> {
 public:
     friend class TensorIterator<T, 0>;
     /*friend class Tensor<T>;*/
-    template<typename, typename> friend class Tensor;
+    template<typename S, size_t rank> friend class Tensor;
 
     TensorIterator<T, 0> begin(){
         std::vector<int> ind(widths.size(), 0);
@@ -347,6 +386,12 @@ public:
         offset = 0;
     }
 
+    Tensor<T>(std::vector<size_t> a){
+        widths = a;
+        strides = cummult(widths);
+        data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
+    }
+
     // copy constructor
     Tensor<T>(const Tensor<T>& a): widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){}
 
@@ -363,8 +408,8 @@ public:
 
     //costruttore che prende width e data
 
-    Tensor<T>(std::initializer_list<size_t>& a, std::vector<T> new_data) : {
-        assert(a.size() > 0 && new_data.size() == mult(a));
+    Tensor<T>(std::initializer_list<size_t>& a, std::vector<T> new_data) {
+        assert(a.size() > 0 && new_data.size() == mult<T>(a));
 
         widths = a;
         strides = cummult(widths);
@@ -397,7 +442,35 @@ public:
         assert(data);
 
         //TODO WTF?
-        assert(data.get()->size() == 36);
+        //assert(data.get()->size() == 36);
+
+        /*cout << "result:" << data.get()->size() << endl;
+        cout << "value:" << tmp << endl;
+        cout << "result:::::" << data.get()->at(tmp) << endl;*/
+
+        return (*data)[tmp];
+        //return (*data)[tmp];      //versione alternativa
+    }
+
+    T& operator()(vector<int> indices_v){
+        assert(indices_v.size() == widths.size());
+
+        size_t tmp = 0;
+
+        for(size_t i=0; i< indices_v.size(); ++i){
+            assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
+            // cout << "stride: " << strides[i] << endl;
+            tmp += indices_v[i] * strides[i];
+            // cout << "value: " << tmp << endl;
+        }
+        tmp += offset;
+        // cout << "+tmp: " << tmp << endl;
+
+        // cout << tmp << endl;
+        assert(data);
+
+        //TODO WTF?
+        //assert(data.get()->size() == 36);
 
         /*cout << "result:" << data.get()->size() << endl;
         cout << "value:" << tmp << endl;
@@ -480,11 +553,12 @@ public:
         return a;
     }
 
-    Tensor<T> multiflatten(const size_t& start, const size_t& stop){  //estremi inclusi
+    Tensor<T> multiFlatten(const size_t& start, const size_t& stop){  //estremi inclusi
         assert(start >= 0 && start < widths.size());
         assert(stop >= 0 && stop < widths.size());
         assert(widths.size() >= 2);     //forse non serve se facciamo l'assert sotto
-        assert((widths.size() - (stop - start +1)) != 0) //non si può tornare un tensore di rank 0
+        cout << "check value assert: " << ( widths.size() - (stop - start) ) << endl;
+        assert(       ( widths.size() - (stop - start) ) > 0      ); //non si può tornare un tensore di rank 0
 
         //TODO serve?
         assert(data);
@@ -510,8 +584,6 @@ public:
         a.strides = cummult(new_width);
         a.data = data;
         a.offset = offset;
-
-        assert(data.get() != nullptr);
         return a;
     }
 
@@ -552,9 +624,9 @@ public:
 
     TensorIterator<T, rank>(Tensor<T, rank>& tensor) : ttensor(tensor) {
         indexes = std::vector<int>(ttensor.widths.size(), 0);
-    }
+    };
 
-    TensorIterator<T, rank>(Tensor<T, rank>& tensor, std::vector<int>& starting_indexes) : indexes(starting_indexes), ttensor(tensor){}
+    TensorIterator<T, rank>(Tensor<T, rank>& tensor, std::vector<int>& starting_indexes) : indexes(starting_indexes), ttensor(tensor){};
 
     T& operator*() const {
         return ttensor(indexes);
@@ -737,6 +809,15 @@ public:
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
+    Tensor<T,1>(std::vector<size_t> a){
+        // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
+        assert(a.size()==1);
+
+        widths = a;
+        strides = cummult(widths);
+        data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
+    }
+
     // copy constructor
     Tensor<T,1>(const Tensor<T>& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){}
 
@@ -746,24 +827,55 @@ public:
         data = make_shared<std::vector<T>>(a);
     }
 
-    T& operator()(initializer_list<size_t> indices){
+    T& operator()(initializer_list<size_t> indices_l){
+        std::vector<size_t> indices = indices_l;
         assert(indices.size() == 1);
 
-        assert(indices_v[0] < widths[0] && indices_v[0] >= 0);
+        assert(indices[0] < widths[0] && indices[0] >= 0);
+        assert(data);
+        //TODO WTF?
+        //assert(data.get()->size() == 36);
 
         std::vector<size_t> indices_v = indices;
         size_t tmp = (indices_v[0] * strides[0]) + offset;
         // cout << "+tmp: " << tmp << endl;
 
         // cout << tmp << endl;
-        assert(data.get() != nullptr);
-        assert(data.get()->size() == 36);
+
 
         /*cout << "result:" << data.get()->size() << endl;
         cout << "value:" << tmp << endl;
         cout << "result:::::" << data.get()->at(tmp) << endl;*/
 
-        return (data.get()->at(tmp));
+        //return (data.get()->at(tmp));
+        return (*data)[tmp];
+    }
+
+    T& operator()(vector<int> indices_v){
+        assert(indices_v.size() == widths.size());
+
+        size_t tmp = 0;
+
+        for(size_t i=0; i< indices_v.size(); ++i){
+            assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
+            // cout << "stride: " << strides[i] << endl;
+            tmp += indices_v[i] * strides[i];
+            // cout << "value: " << tmp << endl;
+        }
+        tmp += offset;
+        // cout << "+tmp: " << tmp << endl;
+
+        // cout << tmp << endl;
+        assert(data);
+
+        //TODO WTF?
+        //assert(data.get()->size() == 36);
+
+        /*cout << "result:" << data.get()->size() << endl;
+        cout << "value:" << tmp << endl;
+        cout << "result:::::" << data.get()->at(tmp) << endl;*/
+
+        return (*data)[tmp];
         //return (*data)[tmp];      //versione alternativa
     }
 
@@ -786,7 +898,7 @@ public:
         assert(stop > start);
         assert(widths[index] > stop);
         assert(start >= 0);
-
+        assert(data);
         //TODO gestire caso in cui genero un tensore di rank 0
 
         Tensor<T> a = Tensor<T>(widths);
@@ -794,7 +906,6 @@ public:
         a.widths[index] = stop - start + 1;
         a.offset += a.strides[index] * start;
 
-        assert(data.get() != nullptr);
         return a;
     }
 
@@ -827,18 +938,13 @@ public:
         assert((sliding_index >= 0) && (sliding_index < indexes_size));
 
         //TODO decidere se fare il controllo sugli indici all'interno
-        /*
-        for (size_t i = 0; i < indexes_size; i++){
-            assert(starting_indexes[i] < tensor.widths[i] );
-        }
-        */
 
         ttensor = tensor;
         indexes = std::vector<int>(starting_indexes);
-        sliding_index = sliding_index;
+        this->sliding_index = sliding_index;
     }
 
-    TensorIteratorFixed<T, rank>(const TensorIteratorFixed<T, rank>& old_iterator) : ttensr(old_iterator.ttensor), indexes(old_iterator.indexes), sliding_index(old_iterator.sliding_index) {}
+    TensorIteratorFixed<T, rank>(const TensorIteratorFixed<T, rank>& old_iterator) : ttensor(old_iterator.ttensor), indexes(old_iterator.indexes), sliding_index(old_iterator.sliding_index) {}
 
     T& operator*() const {
         return ttensor(indexes);
@@ -958,7 +1064,7 @@ private:
         assert(indexes[sliding_index] >= ttensor.widths[sliding_index]);
     }
 
-    bool check_indexes_equality(TensorIteratorFixed<T> other_iter, size_t index_ignore){
+    bool check_indexes_equality(TensorIteratorFixed<T, rank> other_iter, size_t index_ignore){
         //bool ret = true;
         int i = 0;
         while (i < indexes.size() && (i == index_ignore || indexes[i] == other_iter.indexes[i]) ) {
@@ -969,8 +1075,8 @@ private:
             ret = ret && ( i == index_ignore || indexes[i] == other_iter.indexes[i]);
         }
         */
-       return ret;
-        return (i == indexes.size());
+       //return ret;
+       return (i == indexes.size());
     }
 };
 

@@ -117,7 +117,7 @@ void test_flattening(){
     Tensor<int> a = Tensor<int>({2,3,2,3});
     a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
     // cout << "anche qui un operazione che crea errori1111" << endl;
-    Tensor<int> b = a.flatten(0,1);
+    Tensor<int> b = a.flatten(0);
     // cout << "controlliamo il flat del tensore dopo il flattening: " << b._flattened_dim << endl;
     // cout << "anche qui un operazione che crea errori22222" << endl;
 
@@ -135,7 +135,7 @@ void test_flattening(){
 void test_flattening_complex(){
     Tensor<int> a = Tensor<int>({2,3,2,3});
     a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
-    Tensor<int> b = a.flatten(0,1);
+    Tensor<int> b = a.flatten(0);
 
     // 18*1 + 6*2 + 3*1 + 1*0 = 33
     cout << "il mio valore  di controllo è: " << a({1,2,1,0}) << endl;
@@ -150,7 +150,7 @@ void test_flattening_complex(){
 void test_check_consistent_initialization(){
     Tensor<int> a = Tensor<int>({2,3,2,3});
     a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
-    a.initialize({0});
+    // a.initialize({0});
 }
 
 void test_check_consistent_initialization_with_permitted_reinit(){
