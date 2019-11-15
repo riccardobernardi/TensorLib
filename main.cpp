@@ -220,6 +220,47 @@ void test_Tensor_copy_forced(){
     Tensor<int> b = a.copy();
 }
 
+void test_Tensor_assignment_copy(){
+    Tensor<int> a = Tensor<int>({1,2,3});
+    Tensor<int> b(a);
+}
+
+void test_Tensor_assignment_move(){
+    Tensor<int> a = Tensor<int>({1,2,3});
+    Tensor<int> b(std::move(a));
+}
+
+void test_Tensor_window(){
+    Tensor<int> a({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    Tensor<int> b = a.window(1,1,2);
+    for(auto i : b){
+        cout << i << endl;
+    }
+}
+
+void test_Tensor_window_slice(){
+    Tensor<int> a({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    Tensor<int> b = a.slice(1,2);
+    Tensor<int> c = b.window(1,0,1);
+    for(auto i : b){
+        cout << i << endl;
+    }
+}
+
+void test_Tensor_window_slice_10(){
+    Tensor<int> a({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    Tensor<int> b = a.slice(1,0);
+    Tensor<int> c = b.window(1,0,0);
+    for(auto i : c){
+        cout << i << endl;
+    }
+}
+
+
+
 int main() {
 
     Test t;
@@ -247,7 +288,12 @@ int main() {
     t.add(test_Tensor_constructor_despec,"test_Tensor_constructor_despec");
     t.add(test_Tensor_iterator,"test_Tensor_iterator");
     t.add(test_Tensor_copy_forced,"test_Tensor_copy_forced");
+    t.add(test_Tensor_assignment_copy,"test_Tensor_assignment_copy");
+    t.add(test_Tensor_assignment_move,"test_Tensor_assignment_move");
+    t.add(test_Tensor_window,"test_Tensor_window");
+    t.add(test_Tensor_window_slice,"test_Tensor_window_slice");
+    t.add(test_Tensor_window_slice_10,"test_Tensor_window_slice_10");
     t.launch_test(-1);
     //t.launch_test(13);
 
-}
+};

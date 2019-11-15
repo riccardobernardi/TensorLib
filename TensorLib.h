@@ -80,7 +80,10 @@ public:
 
     Tensor<T,rank>(std::initializer_list<size_t> a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
-        assert(a.size()==rank);
+        assert(a.size() == rank);
+        for(auto i : a){
+            assert(i>0);
+        }
 
         cout << "sto usando il generico con valore rank:" << rank << endl;
 
@@ -91,7 +94,11 @@ public:
 
     Tensor<T,rank>(std::vector<size_t> a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
-        assert(a.size()==rank);
+        assert(a.size() == rank);
+
+        for(auto i : a){
+            assert(i>0);
+        }
 
         cout << "sto usando il generico con valore rank:" << rank << endl;
 
@@ -100,12 +107,15 @@ public:
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
-    //TODO secondo cek bisogna toglierla
     Tensor<T,rank>(std::initializer_list<size_t>& a){
         // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
-        assert(a.size()==rank);
+        assert(a.size() == rank);
 
         cout << "sto usando il generico con valore rank:" << rank << endl;
+
+        for(auto i : a){
+            assert(i>0);
+        }
 
         widths = a;
         strides = cummult(widths);
@@ -128,8 +138,12 @@ public:
 
     //costruttore che prende width e data
 
-    Tensor<T>(std::initializer_list<size_t>& a, std::vector<T> new_data) {
-        assert(a.size() > 0 && new_data.size() == mult<T>(a));
+    Tensor<T, rank>(std::initializer_list<size_t>& a, std::vector<T> new_data) {
+        assert(a.size() == rank && new_data.size() == mult<T>(a));
+
+        for(auto i : a){
+            assert(i>0);
+        }
 
         widths = a;
         strides = cummult(widths);
@@ -139,7 +153,7 @@ public:
 
     // initialize with an array that will be represented as a ttensor
     void initialize(std::initializer_list<T>& a){
-        assert ( !data || (a.size() == mult(widths)));
+        assert ( (a.size() == widths.size()));
         data = make_shared<std::vector<T>>(a);
     }
 
@@ -359,34 +373,32 @@ public:
     };
 
     Tensor<T>(std::initializer_list<size_t> a){
-        // cout << "costruttore : Tensor<T>(std::initializer_list<size_t> a)" << endl;
         assert(a.size() > 0);
-        // cout << "stiamop usando la spec" << endl;
-
+        for(auto i : a){
+            assert(i>0);
+        }
 
         widths = a;
         strides = cummult(widths);
-        // cout <<"www"<< widths[0] << endl;
-        // cout <<"sss"<< strides[0] <<endl;
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
     Tensor<T>(std::initializer_list<size_t>& a){
-        // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>& a)" << endl;
         assert(a.size() > 0);
-
-        // cout << "stiamop usando la spec" << endl;
-
+        for(auto i : a){
+            assert(i>0);
+        }
 
         widths = a;
         strides = cummult(widths);
-        // cout <<"www"<< widths[0] << endl;
-        // cout <<"sss"<< strides[0] <<endl;
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
         offset = 0;
     }
 
     Tensor<T>(std::vector<size_t> a){
+        for(auto i : a){
+            assert(i>0);
+        }
         widths = a;
         strides = cummult(widths);
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
@@ -410,6 +422,9 @@ public:
 
     Tensor<T>(std::initializer_list<size_t>& a, std::vector<T> new_data) {
         assert(a.size() > 0 && new_data.size() == mult<T>(a));
+        for(auto i : a){
+            assert(i>0);
+        }
 
         widths = a;
         strides = cummult(widths);
@@ -418,8 +433,8 @@ public:
     }
 
     // initialize with an array that will be represented as a ttensor
-    void initialize(std::initializer_list<T>&& a){
-        assert ( !data || (a.size() == mult(widths)));
+    void initialize(std::initializer_list<T> a){
+        assert ( (a.size() == (*data).size()));
         data = make_shared<std::vector<T>>(a);
     }
 
@@ -431,25 +446,12 @@ public:
 
         for(size_t i=0; i< indices_v.size(); ++i){
             assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
-            // cout << "stride: " << strides[i] << endl;
             tmp += indices_v[i] * strides[i];
-            // cout << "value: " << tmp << endl;
         }
         tmp += offset;
-        // cout << "+tmp: " << tmp << endl;
-
-        // cout << tmp << endl;
         assert(data);
 
-        //TODO WTF?
-        //assert(data.get()->size() == 36);
-
-        /*cout << "result:" << data.get()->size() << endl;
-        cout << "value:" << tmp << endl;
-        cout << "result:::::" << data.get()->at(tmp) << endl;*/
-
         return (*data)[tmp];
-        //return (*data)[tmp];      //versione alternativa
     }
 
     T& operator()(vector<int> indices_v){
@@ -459,25 +461,12 @@ public:
 
         for(size_t i=0; i< indices_v.size(); ++i){
             assert(indices_v[i] < widths[i] && indices_v[i] >= 0);
-            // cout << "stride: " << strides[i] << endl;
             tmp += indices_v[i] * strides[i];
-            // cout << "value: " << tmp << endl;
         }
         tmp += offset;
-        // cout << "+tmp: " << tmp << endl;
-
-        // cout << tmp << endl;
         assert(data);
 
-        //TODO WTF?
-        //assert(data.get()->size() == 36);
-
-        /*cout << "result:" << data.get()->size() << endl;
-        cout << "value:" << tmp << endl;
-        cout << "result:::::" << data.get()->at(tmp) << endl;*/
-
         return (*data)[tmp];
-        //return (*data)[tmp];      //versione alternativa
     }
 
     void set(initializer_list<size_t> indices, T& value){
@@ -588,7 +577,7 @@ public:
     }
 
     Tensor<T> window(const size_t& index, const size_t& start, const size_t& stop){
-        assert(stop > start);
+        assert(stop >= start);
         assert(widths[index] > stop);
         assert(start >= 0);
         //TODO serve?
@@ -598,6 +587,8 @@ public:
 
         a.widths[index] = stop - start + 1;
         a.offset += a.strides[index] * start;
+        a.data = data;
+        a.strides = strides;
 
         return a;
     }
@@ -790,7 +781,6 @@ public:
     }
 
     TensorIteratorFixed<T, 1> end(const std::vector<int>& starting_indexes, const size_t& sliding_index){
-        // assert(sliding_index == 0);
         std::vector<int> ind(1);
         ind[0] = widths[0];
 
@@ -798,20 +788,33 @@ public:
     }
 
     Tensor<T,1>(std::initializer_list<size_t> a){
+        //assert(a[0]>0);
+        for(auto i : a){
+            assert(i>0);
+        }
+
         widths = a;
         strides = cummult(widths);
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
     Tensor<T,1>(std::initializer_list<size_t>& a){
+        //assert(a[0]>0);
+        for(auto i : a){
+            assert(i>0);
+        }
+
         widths = a;
         strides = cummult(widths);
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
     Tensor<T,1>(std::vector<size_t> a){
-        // cout << "costruttore : Tensor<T>(std::initializer_list<size_t>&& a)" << endl;
         assert(a.size()==1);
+        //assert(a[0]>0);
+        for(auto i : a){
+            assert(i>0);
+        }
 
         widths = a;
         strides = cummult(widths);
@@ -821,9 +824,22 @@ public:
     // copy constructor
     Tensor<T,1>(const Tensor<T>& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){}
 
+    Tensor<T, 1>(std::initializer_list<size_t>& a, std::vector<T> new_data) {
+        assert(a.size() == 1 && new_data.size() == mult<size_t>(a));
+        //assert(a[0]>0);
+        for(auto i : a){
+            assert(i>0);
+        }
+
+        widths = a;
+        strides = cummult(widths);
+        data = std::make_shared<new_data>;
+        offset = 0;
+    }
+
     // initialize with an array that will be represented as a ttensor
     void initialize(std::initializer_list<T>&& a){
-        assert(!data || (a.size() == mult(widths) ) );
+        assert ( (a.size() == 1));
         data = make_shared<std::vector<T>>(a);
     }
 
