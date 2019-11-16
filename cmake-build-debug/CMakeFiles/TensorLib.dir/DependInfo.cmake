@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/Users/rr/Git_repo/TensorLib/main.cpp" "/Users/rr/Git_repo/TensorLib/cmake-build-debug/CMakeFiles/TensorLib.dir/main.cpp.o"
+  "/Users/rr/Documents/GitHub/TensorLib/main.cpp" "/Users/rr/Documents/GitHub/TensorLib/cmake-build-debug/CMakeFiles/TensorLib.dir/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "AppleClang")
 

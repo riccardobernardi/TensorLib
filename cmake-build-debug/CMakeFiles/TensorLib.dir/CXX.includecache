@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/Users/rr/Git_repo/TensorLib/TensorLib.h
+/Users/rr/Documents/GitHub/TensorLib/TensorLib.h
 vector
 -
 algorithm
@@ -14,23 +14,23 @@ algorithm
 type_traits
 -
 utilities.h
-/Users/rr/Git_repo/TensorLib/utilities.h
+/Users/rr/Documents/GitHub/TensorLib/utilities.h
 cstdarg
 -
 math.h
 -
 
-/Users/rr/Git_repo/TensorLib/TestLib.h
+/Users/rr/Documents/GitHub/TensorLib/TestLib.h
 
-/Users/rr/Git_repo/TensorLib/main.cpp
+/Users/rr/Documents/GitHub/TensorLib/main.cpp
 iostream
 -
 TensorLib.h
-/Users/rr/Git_repo/TensorLib/TensorLib.h
+/Users/rr/Documents/GitHub/TensorLib/TensorLib.h
 TestLib.h
-/Users/rr/Git_repo/TensorLib/TestLib.h
+/Users/rr/Documents/GitHub/TensorLib/TestLib.h
 
-/Users/rr/Git_repo/TensorLib/utilities.h
+/Users/rr/Documents/GitHub/TensorLib/utilities.h
 TensorLib.h
-/Users/rr/Git_repo/TensorLib/TensorLib.h
+/Users/rr/Documents/GitHub/TensorLib/TensorLib.h
 

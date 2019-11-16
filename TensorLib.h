@@ -82,7 +82,7 @@ public:
 
 
     // costruttore che prende le widths come initializer_list (value)
-    Tensor<T,rank>(const std::initializer_list<size_t> a){
+    Tensor<T,rank>(std::initializer_list<size_t> a){
         assert(a.size() == rank);
         for(auto i : a){
             assert(i>0);
@@ -105,7 +105,7 @@ public:
     }
 
     // costruttore che prende le widths come initializer_list (reference)
-    Tensor<T,rank>(const std::initializer_list<size_t>& a){
+    Tensor<T,rank>(std::initializer_list<size_t>& a){
         assert(a.size() == rank);
 
         cout << "sto usando il generico con valore rank:" << rank << endl;
@@ -376,7 +376,7 @@ public:
     };
  
     //costruttore che prende le widths come initializer_list (value)
-    Tensor<T>(const std::initializer_list<size_t> a){
+    Tensor<T>(std::initializer_list<size_t> a){
         assert(a.size() > 0);
         for(auto i : a){
             assert(i>0);
@@ -388,7 +388,7 @@ public:
     }
 
     // costruttore che prende le widths come initializer_list (reference)
-    Tensor<T>(const std::initializer_list<size_t>& a){
+    Tensor<T>(std::initializer_list<size_t>& a){
         assert(a.size() > 0);
         for(auto i : a){
             assert(i>0);
@@ -401,7 +401,7 @@ public:
     }
 
     // costruttore che prende le widths come vector (value)
-    Tensor<T>(const std::vector<size_t> a){
+    Tensor<T>(std::vector<size_t> a){
         for(auto i : a){
             assert(i>0);
         }
@@ -411,7 +411,7 @@ public:
     }
 
     // copy constructor
-    Tensor<T>(const Tensor<T>& a): widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){}
+    Tensor<T>(Tensor<T>& a): widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){}
 
     //move constructor, il tensore che viene passato come parametro verrà svuotato dei dati
     Tensor<T>(Tensor<T>&& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){
@@ -422,7 +422,7 @@ public:
     }
 
     //costruttore che prende width e data
-    Tensor<T>(const std::initializer_list<size_t>& a, std::vector<T>& new_data) {
+    Tensor<T>(std::initializer_list<size_t>& a, std::vector<T>& new_data) {
         assert(a.size() > 0 && new_data.size() == mult<T>(a));
         for(auto i : a){
             assert(i>0);
@@ -859,7 +859,7 @@ public:
     Tensor<T,1>(const Tensor<T>& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){}
 
     //move constructor, il tensore che viene passato come parametro verrà svuotato dei dati
-    Tensor<T, 1>(Tensor<T, rank>&& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){
+    Tensor<T, 1>(Tensor<T>&& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){
         //non possiamo cambiare i metadati dell'altro tensore perchè i metadati sono immutable
         //non è necessario fare altre operazioni sul vecchio shared_pointer (per fare in modo che decrementi il contatore di pointers attivi)
         //poichè l'operatore = è overloadato e ci pensano loro
@@ -911,7 +911,7 @@ public:
 
     //permette di settare un elemento
     void set(const initializer_list<size_t> indices_l, const T& value){
-        vector<int> indices = indices_l;
+        vector<size_t> indices = indices_l;
         assert(indices.size() == 1);
         assert(indices[0] < widths[0] && indices[0] >= 0);
         assert(data);
@@ -922,7 +922,7 @@ public:
 
     //permette di gettare un elemento
     T get(const initializer_list<size_t> indices_l){
-        vector<int> indices = indices_l;
+        vector<size_t> indices = indices_l;
         assert(indices.size() == 1);
         assert(indices[0] < widths[0] && indices[0] >= 0);
         assert(data);
