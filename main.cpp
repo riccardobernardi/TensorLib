@@ -218,6 +218,11 @@ void test_Tensor_iterator(){
 void test_Tensor_copy_forced(){
     Tensor<int> a = Tensor<int>({1,2,3});
     Tensor<int> b = a.copy();
+    Tensor<int> c = a;
+    a({0,0,0}) = 11111;
+    cout << "a[000]" << a({0,0,0}) << endl;
+    cout << "b[000]" << b({0,0,0}) << endl;
+    cout << "c[000]" << c({0,0,0}) << endl;
 }
 
 void test_Tensor_assignment_copy(){
