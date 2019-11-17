@@ -215,7 +215,7 @@ public:
         return (*data)[tmp];
     }
 
-    //fa la slice sulla dimensione in posizione index sul valore value
+    // does the slice on the dimension on the position index on the value value
     Tensor<T, rank - 1> slice(const size_t&  index, const size_t& value){
         assert(index >= 0 && index < widths.size());
         assert(value >= 0 && value < widths[index]);
@@ -232,7 +232,8 @@ public:
     }
 
     //TODO opt: non necessario ciclare se la dimensione e fissa
-    //flatten singola, prende l'indice della dimensione di sinistra, es: dim = [2,3,5,1], flatten(2) prende le dimensioni larghe 5 e 1
+
+    // single flatten, takes left dimension index, es: dim = [2,3,5,1], flatten(2) takes dimensions that are large 5 and 1
     Tensor<T, rank - 1> flatten(const size_t& start){  //flatten tra start e start+1
         assert(start >= 0 && start < widths.size()-1);
         assert(data);
@@ -258,7 +259,7 @@ public:
         return a;
     }
 
-    //flatten multipla, prende gli indici delle dimensioni all'inizio e alla fine della flatten, es: dim = [2,3,5,,6], flatten(1,3) prende le dimensioni larghe 3, 5 e 4
+    // multiple flatten, do the same thing as before but there is no constraint about how many dimensions to flattem at the same time, dimensions are all consecutives
     Tensor<T> multiFlatten(const size_t& start, const size_t& stop){  //estremi inclusi
         assert(stop >= start);
         assert(start >= 0 && start < widths.size());
@@ -292,7 +293,7 @@ public:
         return a;
     }
 
-    //fa la window, prende l'indice della dimensione da restringere e i due estremi degli indici da "accettare"
+    // window, takes index of dimension to be shrinked and the ends that will be accepted after operation.
     Tensor<T, rank> window(const size_t& index, const size_t& start, const size_t& stop){
         assert(stop > start);
         assert(widths[index] > stop);
@@ -336,11 +337,11 @@ private:
 template<class T>
 class Tensor<T,0> {
 public:
-    //gli iteratori hanno bisogno di accedere ai campi width
+    // iterators need to access fields of width
     friend class TensorIterator<T, 0>;
     friend class TensorIteratorFixed<T, 0>;
 
-    //nella multiflatten il tensore di grado statico accede ai campi di questo tensore per modificare i metadati e i dati
+    // in the slice or flatten we need to access to static tensor template to modify metadata
     template<typename S, size_t rank> friend class Tensor;
 
 
@@ -366,7 +367,7 @@ public:
         return TensorIteratorFixed<T, 0>(*this,ind,sliding_index);
     }
 
-    //copia forzata, vengono copiati (e non condivisi) i dati sul nuovo tensore
+    // data is hard copied, so data is not shared with the older tensor
     Tensor<T> copy() const {
         Tensor<T, 0> a(widths);
         a.strides = strides;
@@ -374,8 +375,8 @@ public:
         a.data = make_shared<std::vector<T>>(*data);
         return a;
     };
- 
-    //costruttore che prende le widths come initializer_list (value)
+
+    // constructor that takes widths as initializer list
     Tensor<T>(std::initializer_list<size_t> a){
         assert(a.size() > 0);
         for(auto i : a){
@@ -387,20 +388,7 @@ public:
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
-    // costruttore che prende le widths come initializer_list (reference)
-    Tensor<T>(std::initializer_list<size_t>& a){
-        assert(a.size() > 0);
-        for(auto i : a){
-            assert(i>0);
-        }
-
-        widths = a;
-        strides = cummult(widths);
-        data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
-        offset = 0;
-    }
-
-    // costruttore che prende le widths come vector (value)
+    // constructor that takes widths as vector
     Tensor<T>(std::vector<size_t> a){
         for(auto i : a){
             assert(i>0);
@@ -413,7 +401,7 @@ public:
     // copy constructor
     Tensor<T>(Tensor<T>& a): widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){}
 
-    //move constructor, il tensore che viene passato come parametro verrà svuotato dei dati
+    //move constructor, tensor is passed as parameter and it is emptied of its data
     Tensor<T>(Tensor<T>&& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){
         //non possiamo cambiare i metadati dell'altro tensore perchè i metadati sono immutable
         //non è necessario fare altre operazioni sul vecchio shared_pointer (per fare in modo che decrementi il contatore di pointers attivi)
@@ -421,7 +409,7 @@ public:
         a.data = std::shared_ptr<std::vector<T>>();
     }
 
-    //costruttore che prende width e data
+    // constructor that takes widths as initializer list and the relative vector of data
     Tensor<T>(std::initializer_list<size_t>& a, std::vector<T>& new_data) {
         assert(a.size() > 0 && new_data.size() == mult<T>(a));
         for(auto i : a){
@@ -457,7 +445,7 @@ public:
         return (*data)[tmp];
     }
 
-    //get/set, ritornando la reference si lascia la possibilità di settare il valore dell'elemento , prende un vettore di indici
+    // get/set for data, giving back the refence you can also assign
     T& operator()(vector<int> indices_v){
         assert(indices_v.size() == widths.size());
         assert(data);
@@ -507,7 +495,7 @@ public:
         return (*data)[tmp];
     }
 
-    //fa la slice sulla dimensione in posizione index sul valore value
+    // does the slice on the dimension on the position index on the value value
     Tensor<T> slice(const size_t&  index, const size_t& value){
         assert(index >= 0 && index < widths.size());
         assert(value >= 0 && value < widths[index]);
@@ -523,7 +511,7 @@ public:
         return a;
     }
 
-    //flatten singola, prende l'indice della dimensione di sinistra, es: dim = [2,3,5,1], flatten(2) prende le dimensioni larghe 5 e 1
+    // single flatten, takes left dimension index, es: dim = [2,3,5,1], flatten(2) takes dimensions that are large 5 and 1
     Tensor<T> flatten(const size_t& start){  //flatten tra start e start+1
         assert(start >= 0 && start < widths.size() - 1);
         assert(widths.size() >= 2);
@@ -555,7 +543,7 @@ public:
         return a;
     }
 
-    //flatten multipla, prende gli indici delle dimensioni all'inizio e alla fine della flatten, es: dim = [2,3,5,,6], flatten(1,3) prende le dimensioni larghe 3, 5 e 4
+    // multiple flatten, do the same thing as before but there is no constraint about how many dimensions to flattem at the same time, dimensions are all consecutives
     Tensor<T> multiFlatten(const size_t& start, const size_t& stop){  //estremi inclusi
         assert(stop >= start);        
         assert(start >= 0 && start < widths.size());
@@ -588,7 +576,7 @@ public:
         return a;
     }
 
-    //fa la window, prende l'indice della dimensione da restringere e i due estremi degli indici da "accettare"
+    // window, takes index of dimension to be shrinked and the ends that will be accepted after operation.
     Tensor<T> window(const size_t& index, const size_t& start, const size_t& stop){
         assert(stop >= start);
         assert(widths[index] > stop);
@@ -625,7 +613,7 @@ private:
 template<class T>
 class Tensor<T,1> {
 public:
-    //gli iteratori hanno bisogno di accedere ai campi width
+    // iterators need to access fields of width
     friend class TensorIterator<T, 1>;
     friend class TensorIteratorFixed<T, 1>;
 
@@ -654,7 +642,7 @@ public:
         return TensorIteratorFixed<T, 1>(*this,ind,sliding_index);
     }
 
-    //copia forzata, vengono copiati (e non condivisi) i dati sul nuovo tensore
+    // data is hard copied, so data is not shared with the older tensor
     Tensor<T, 1> copy() const {
         Tensor<T, 1> a(widths);
         a.strides = strides;
@@ -663,7 +651,7 @@ public:
         return a;
     }
 
-    // costruttore che prende le widths come initializer_list (value)
+    // constructor that takes widths as initializer list
     Tensor<T,1>(const std::initializer_list<size_t> a){
         //assert(a[0]>0);
         //TODO questa bisogna migliorarla
@@ -676,20 +664,7 @@ public:
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
-    // costruttore che prende le widths come initializer_list (reference)
-    Tensor<T,1>(const std::initializer_list<size_t>& a){
-        //assert(a[0]>0);
-        //TODO questa bisogna migliorarla
-        for(auto i : a){
-            assert(i>0);
-        }
-
-        widths = a;
-        strides = cummult(widths);
-        data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
-    }
-
-    // costruttore che prende le widths come vector (value)
+    // costruttore which takes widths as a vector
     Tensor<T,1>(const std::vector<size_t> a){
         assert(a.size()==1);
         //assert(a[0]>0);
@@ -706,7 +681,7 @@ public:
     // copy constructor
     Tensor<T,1>(const Tensor<T>& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){}
 
-    //move constructor, il tensore che viene passato come parametro verrà svuotato dei dati
+    //move constructor, tensor is passed as parameter and it is emptied of its data
     Tensor<T, 1>(Tensor<T>&& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){
         //non possiamo cambiare i metadati dell'altro tensore perchè i metadati sono immutable
         //non è necessario fare altre operazioni sul vecchio shared_pointer (per fare in modo che decrementi il contatore di pointers attivi)
@@ -714,7 +689,7 @@ public:
         a.data = std::shared_ptr<std::vector<T>>();
     }
 
-    //costruttore che prende width e data
+    // constructor that takes widths as initializer list and the relative vector of data
     Tensor<T, 1>(const std::initializer_list<size_t>& a, std::vector<T>& new_data) {
         assert(a.size() == 1 && new_data.size() == mult<size_t>(a));
         //assert(a[0]>0);
@@ -734,7 +709,7 @@ public:
         data = make_shared<std::vector<T>>(a);
     }
 
-    //get/set, ritornando la reference si lascia la possibilità di settare il valore dell'elemento ritornato, prende 
+    // get/set for data, giving back the refence you can also assign
     T& operator()(const initializer_list<size_t>& indices_l){
         std::vector<size_t> indices = indices_l;
         assert(indices.size() == 1);
@@ -747,7 +722,7 @@ public:
         return (*data)[tmp];
     }
 
-    //get/set, ritornando la reference si lascia la possibilità di settare il valore dell'elemento , prende un vettore di indici
+    // get/set for data, giving back the refence you can also assign
     T& operator()(vector<int> indices){
         assert(indices.size() == 1);
         assert(indices[0] < widths[0] && indices[0] >= 0);
@@ -757,7 +732,7 @@ public:
         return (*data)[tmp];
     }
 
-    //permette di settare un elemento
+    //allow to set an element
     void set(const initializer_list<size_t> indices_l, const T& value){
         vector<size_t> indices = indices_l;
         assert(indices.size() == 1);
@@ -768,7 +743,7 @@ public:
         (*data)[tmp] = value;
     }
 
-    //permette di gettare un elemento
+    //allow to get an element
     T get(const initializer_list<size_t> indices_l){
         vector<size_t> indices = indices_l;
         assert(indices.size() == 1);
@@ -779,7 +754,7 @@ public:
         return (*data)[tmp];
     }
 
-    //fa la window, prende l'indice della dimensione da restringere e i due estremi degli indici da "accettare"
+    // window, takes index of dimension to be shrinked and the ends that will be accepted after operation.
     Tensor<T,1> window(const size_t& index, const size_t& start, const size_t& stop){
         assert(stop > start);
         assert(widths[index] > stop);
