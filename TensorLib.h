@@ -1100,7 +1100,7 @@ private:
     void increment(const int& index_inc) {
         indexes[sliding_index] += index_inc;
         //controllo overflow
-        assert(indexes[sliding_index] >= ttensor.widths[sliding_index]);
+        //assert(indexes[sliding_index] > ttensor.widths[sliding_index]);
     }
 
     bool check_indexes_equality(const TensorIteratorFixed<T, rank> other_iter, const size_t index_ignore) const {
