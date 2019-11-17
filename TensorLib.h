@@ -105,7 +105,7 @@ public:
     }
 
     // costruttore che prende le widths come initializer_list (reference)
-    Tensor<T,rank>(std::initializer_list<size_t>& a){
+    Tensor<T,rank>(const std::vector<size_t>& a){
         assert(a.size() == rank);
 
         cout << "sto usando il generico con valore rank:" << rank << endl;
@@ -360,7 +360,7 @@ public:
     }
 
     TensorIteratorFixed<T, 0> end(const std::vector<int>& starting_indexes, const size_t& sliding_index){
-        std::vector<int> ind(widths.size());
+        std::vector<int> ind = std::vector<int>(widths.size());
         ind[sliding_index] = widths[sliding_index];
 
         return TensorIteratorFixed<T, 0>(*this,ind,sliding_index);
@@ -964,18 +964,18 @@ private:
 //tutti gli operatori di confronto ritornano false se il tensore riferito non è lo stesso o
 //se la dimensione lungo la quale si scorre non è la stessa o
 //se gli indici fissati non sono gli stessi
-template<class T, size_t rank>
+template<class T,size_t rank>
 class TensorIteratorFixed{
 public:
 
     //costruttore che prende il tensore, gli indici da cui partire e l'indice della dimensione da scorrere
-    TensorIteratorFixed<T, rank>(const Tensor<T>& tensor, const std::vector<int>& starting_indexes, const size_t& sliding_index) {
+    TensorIteratorFixed<T, rank>(Tensor<T>& tensor, const std::vector<int>& starting_indexes, const size_t& sliding_index) :ttensor(tensor) {
         size_t indexes_size = starting_indexes.size();
         assert(indexes_size == tensor.widths.size());
 
         assert((sliding_index >= 0) && (sliding_index < indexes_size));
 
-        ttensor = tensor;
+
         indexes = std::vector<int>(starting_indexes);
         this->sliding_index = sliding_index;
     }
@@ -1003,7 +1003,7 @@ public:
     TensorIteratorFixed<T, rank>& operator++() {
         //incrementa me e ritorna la referenza
         increment(1);
-        return this;
+        return (*this);
     }
 
     TensorIteratorFixed<T, rank> operator--(int) {
@@ -1058,7 +1058,7 @@ public:
     bool operator<(const TensorIteratorFixed<T, rank>& other_iterator) const {
         return ( (&other_iterator.ttensor == &ttensor) &&
                 (sliding_index == other_iterator.sliding_index) &&
-                check_indexes_equality(other_iterator) &&
+                check_indexes_equality(other_iterator,sliding_index ) &&
                 (indexes[sliding_index] < other_iterator.indexes) );
     }
 

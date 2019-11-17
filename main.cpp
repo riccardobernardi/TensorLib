@@ -264,6 +264,14 @@ void test_Tensor_window_slice_10(){
     }
 }
 
+void test_Tensor_iteration_fixed(){
+    Tensor<int> a({2,3,2,3});
+    a.initialize({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35});
+    for(auto i = a.begin({0,0,0,0}, 1); i != a.end({0,0,0,0}, 1); ++i){
+        cout << (*i) << endl;
+    }
+}
+
 
 
 int main() {
@@ -298,6 +306,7 @@ int main() {
     t.add(test_Tensor_window,"test_Tensor_window");
     t.add(test_Tensor_window_slice,"test_Tensor_window_slice");
     t.add(test_Tensor_window_slice_10,"test_Tensor_window_slice_10");
+    t.add(test_Tensor_iteration_fixed,"test_Tensor_iteration_fixed");
     t.launch_test(-1);
     //t.launch_test(13);
 
