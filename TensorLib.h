@@ -42,11 +42,11 @@ template<class T = size_t, size_t rank=0>
 class Tensor {
 public:
 
-    //gli iteratori hanno bisogno di accedere ai campi width
+    // iterators need to access fields of width
     friend class TensorIterator<T, rank>;
     friend class TensorIteratorFixed<T, rank>;
 
-    //nelle slice/flatten il tensore di grado superiore accede ai campi di questo tensore per modificare i metadati e i dati
+    // in the slice or flatten we need to access to tensor of upper template to modify metadata
     friend class Tensor<T, rank + 1>;
 
     TensorIterator<T, rank> begin(){
@@ -71,7 +71,7 @@ public:
         return TensorIteratorFixed<T,rank>(*this,ind,sliding_index);
     }
 
-    //copia forzata, vengono copiati (e non condivisi) i dati sul nuovo tensore
+    // data is hard copied, so data is not shared with the older tensor
     Tensor<T, rank> copy() const {
         Tensor<T, rank> a(widths);
         a.strides = strides;
@@ -80,8 +80,7 @@ public:
         return a;
     }
 
-
-    // costruttore che prende le widths come initializer_list (value)
+    // constructor that takes widths as initializer list
     Tensor<T,rank>(std::initializer_list<size_t> a){
         assert(a.size() == rank);
         for(auto i : a){
@@ -92,7 +91,7 @@ public:
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
-    // costruttore che prende le widths come vector (value)
+    // constructor that takes widths as vector
     Tensor<T,rank>(const std::vector<size_t> a){
         assert(a.size() == rank);
 
@@ -104,7 +103,7 @@ public:
         data = std::make_shared<std::vector<T>>(strides[0] * widths[0], 0); //vettore lungo mult(width) di zeri
     }
 
-    // costruttore che prende le widths come initializer_list (reference)
+    // constructor that takes widths as reference of initializer list
     Tensor<T,rank>(const std::vector<size_t>& a){
         assert(a.size() == rank);
 
@@ -122,7 +121,7 @@ public:
     // copy constructor
     Tensor<T, rank>(const Tensor<T, rank>& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){}
 
-    //move constructor, il tensore che viene passato come parametro verrà svuotato dei dati
+    //move constructor, tensor is passed as parameter and it is emptied of its data
     Tensor<T, rank>(Tensor<T, rank>&& a) : widths(a.widths), strides(a.strides), data(a.data), offset(a.offset){
         //non possiamo cambiare i metadati dell'altro tensore perchè i metadati sono immutable
         //non è necessario fare altre operazioni sul vecchio shared_pointer (per fare in modo che decrementi il contatore di pointers attivi)
@@ -130,7 +129,7 @@ public:
         a.data = std::shared_ptr<std::vector<T>>();
     }
 
-    //costruttore che prende width e data
+    // constructor that takes widths as initializer list and the relative vector of data
     Tensor<T, rank>(const std::initializer_list<size_t>& a, std::vector<T>& new_data) {
         assert(a.size() == rank && new_data.size() == mult<T>(a));
 
@@ -150,7 +149,7 @@ public:
         data = make_shared<std::vector<T>>(a);
     }
 
-    //get/set, ritornando la reference si lascia la possibilità di settare il valore dell'elemento ritornato, prende 
+    // get/set for data, giving back the refence you can also assign
     T& operator()(const initializer_list<size_t>& indices){
         assert(indices.size() == widths.size());
         assert(data);
@@ -167,7 +166,7 @@ public:
         return ((*data)[tmp]);
     }
 
-    //get/set, ritornando la reference si lascia la possibilità di settare il valore dell'elemento , prende un vettore di indici
+    // get/set for data, giving back the refence you can also assign
     T& operator()(vector<int> indices_v){
         assert(indices_v.size() == widths.size());
         assert(data);
@@ -182,7 +181,7 @@ public:
         return (*data)[tmp];
     }
 
-    //permette di settare un elemento
+    //allow to set an element
     void set(const initializer_list<size_t> indices, const T& value){
         assert(indices.size() == widths.size());
         assert(data);
@@ -199,7 +198,7 @@ public:
         (*data)[tmp] = value;
     }
 
-    //permette di gettare un elemento
+    // allow to get an element
     T get(const initializer_list<size_t> indices) const {
         assert(indices.size() == widths.size());
         assert(data);
