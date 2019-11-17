@@ -789,24 +789,23 @@ template<class T, size_t rank>
 class TensorIterator {
 public:
 
-    //costruttore che prende solo un tensore, costruisce un iteratore che parte dall'indice 0
+    // takes one tensor and builds an iterator that starts from 0
     TensorIterator<T, rank>(Tensor<T, rank>& tensor) : ttensor(tensor) {
         indexes = std::vector<int>(ttensor.widths.size(), 0);
     };
 
-    //costruttore per copia
+    //copy constructor
     TensorIterator<T, rank>(const TensorIterator<T, rank>& old_iterator) : ttensor(old_iterator.ttensor), indexes(old_iterator.indexes) {};
 
-
-    //costruttore che prende gli indici da cui partire, nesun controllo sulla loro validità
+    //constructor that takes indexes from which the iterator will starts, no check about correctness
     TensorIterator<T, rank>(Tensor<T, rank>& tensor, const std::vector<int>& starting_indexes) : indexes(starting_indexes), ttensor(tensor){};
 
-    //accesso lettura/scrittura all'elemento puntato dall'iteratore
+    // read and write to an element pointed by iterator
     T& operator*() const {
         return ttensor(indexes);
     }
 
-    //torna il puntatore all'elemento puntato dall'iteratore
+    // returns pointer to element pointed by iterator
     T* operator->() const {
         return &(ttensor(indexes));
     }
@@ -903,7 +902,7 @@ private:
     Tensor<T, rank>& ttensor;
     std::vector<int> indexes;
     size_t sliding_index={};
-    //con size_t non si può lavorare con valori negativi, a noi serve int perchè per il decremento degli indici li mettiamo temporaneamente negativi
+    // we will to use int because we use negative numbers when we decrement
 
     int single_index() const {
         size_t single_index = 0;
@@ -936,15 +935,12 @@ private:
 //##########################################################################
 //              FIXED ITERATOR
 //##########################################################################
-
-//tutti gli operatori di confronto ritornano false se il tensore riferito non è lo stesso o
-//se la dimensione lungo la quale si scorre non è la stessa o
-//se gli indici fissati non sono gli stessi
+// all operators that do a comparison return false if the old tensor and the current tensor are not the same or if the sliding dimension is not the same or if fixed indexes are not the same.
 template<class T,size_t rank>
 class TensorIteratorFixed{
 public:
 
-    //costruttore che prende il tensore, gli indici da cui partire e l'indice della dimensione da scorrere
+    // constructor that takes tensor, indexes from which it can start and index of dimension to slide
     TensorIteratorFixed<T, rank>(Tensor<T>& tensor, const std::vector<int>& starting_indexes, const size_t& sliding_index) :ttensor(tensor) {
         size_t indexes_size = starting_indexes.size();
         assert(indexes_size == tensor.widths.size());
@@ -956,15 +952,15 @@ public:
         this->sliding_index = sliding_index;
     }
 
-    //costruttore per copia
+    // copy constructor
     TensorIteratorFixed<T, rank>(const TensorIteratorFixed<T, rank>& old_iterator) : ttensor(old_iterator.ttensor), indexes(old_iterator.indexes), sliding_index(old_iterator.sliding_index) {}
 
-    //accesso lettura/scrittura all'elemento puntato dall'iteratore
+    // access read/write to element pointed by iterator
     T& operator*() const {
         return ttensor(indexes);
     }
 
-    //torna il puntatore all'elemento puntato dall'iteratore
+    // turns back pointer to element pointed by iterator
     T* operator->() const {
         return &(this->ttensor(this->indexes));
     }
