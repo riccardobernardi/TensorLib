@@ -863,7 +863,6 @@ public:
         return *this;
     }
 
-
     bool operator==(const TensorIterator<T, rank>& other_iterator) const {
         return (&other_iterator.ttensor == ttensor && &other_iterator.indexes == indexes);
     }
