@@ -1025,7 +1025,8 @@ public:
     }
 
     bool operator!=(const TensorIteratorFixed<T, rank>& other_iterator) const {
-        return ( (&other_iterator.ttensor == &ttensor) && ( other_iterator.indexes != indexes || other_iterator.sliding_index != sliding_index) );
+        return ( (&other_iterator.ttensor == &ttensor) &&
+        ( other_iterator.indexes != indexes || other_iterator.sliding_index != sliding_index) );
     }
 
     TensorIteratorFixed<T, rank>& operator+=(int inc) {
@@ -1059,29 +1060,29 @@ public:
     bool operator<(const TensorIteratorFixed<T, rank>& other_iterator) const {
         return ( (&other_iterator.ttensor == &ttensor) &&
                 (sliding_index == other_iterator.sliding_index) &&
-                check_indexes_equality(other_iterator,sliding_index ) &&
-                (indexes[sliding_index] < other_iterator.indexes) );
+                check_indexes_equality(other_iterator, sliding_index ) &&
+                (indexes[sliding_index] < other_iterator.indexes[sliding_index]) );
     }
 
     bool operator>(const TensorIteratorFixed<T, rank>& other_iterator) const {
         return ( (&other_iterator.ttensor == &ttensor) &&
                 (sliding_index == other_iterator.sliding_index) &&
                 check_indexes_equality(other_iterator) &&
-                (indexes[sliding_index] > other_iterator.indexes) );
+                (indexes[sliding_index] > other_iterator.indexes[sliding_index]) );
     }
 
     bool operator<=(const TensorIteratorFixed<T, rank>& other_iterator) const {
         return ( (&other_iterator.ttensor == &ttensor) &&
                 (sliding_index == other_iterator.sliding_index) &&
                 check_indexes_equality(other_iterator) &&
-                (indexes[sliding_index] <= other_iterator.indexes) );
+                (indexes[sliding_index] <= other_iterator.indexes[sliding_index]) );
     }
 
     bool operator>=(const TensorIteratorFixed<T, rank>& other_iterator) const {
         return ( (&other_iterator.ttensor == &ttensor) &&
                 (sliding_index == other_iterator.sliding_index) &&
                 check_indexes_equality(other_iterator) &&
-                (indexes[sliding_index] >= other_iterator.indexes) );
+                (indexes[sliding_index] >= other_iterator.indexes[sliding_index]) );
     }
 
     int operator-(const TensorIteratorFixed<T, rank>& other_iterator) const {
