@@ -232,6 +232,7 @@ public:
         return a;
     }
 
+    //TODO opt: non necessario ciclare se la dimensione e fissa
     //flatten singola, prende l'indice della dimensione di sinistra, es: dim = [2,3,5,1], flatten(2) prende le dimensioni larghe 5 e 1
     Tensor<T, rank - 1> flatten(const size_t& start){  //flatten tra start e start+1
         assert(start >= 0 && start < widths.size()-1);
@@ -617,158 +618,6 @@ private:
 };
 
 //##########################################################################
-//              ITERATORE RANDOM ACCESS
-//##########################################################################
-
-//gli operatori di confronto danno sempre false se i tensori referenziati dagli iteratori non sono uguali
-template<class T, size_t rank>
-class TensorIterator {
-public:
-
-    //costruttore che prende solo un tensore, costruisce un iteratore che parte dall'indice 0
-    TensorIterator<T, rank>(Tensor<T, rank>& tensor) : ttensor(tensor) {
-        indexes = std::vector<int>(ttensor.widths.size(), 0);
-    };
-
-    //costruttore per copia
-    TensorIterator<T, rank>(const TensorIterator<T, rank>& old_iterator) : ttensor(old_iterator.ttensor), indexes(old_iterator.indexes) {};
-
-
-    //costruttore che prende gli indici da cui partire, nesun controllo sulla loro validità
-    TensorIterator<T, rank>(Tensor<T, rank>& tensor, const std::vector<int>& starting_indexes) : indexes(starting_indexes), ttensor(tensor){};
-
-    //accesso lettura/scrittura all'elemento puntato dall'iteratore
-    T& operator*() const {
-        return ttensor(indexes);
-    }
-
-    //torna il puntatore all'elemento puntato dall'iteratore
-    T* operator->() const {
-        return &(ttensor(indexes));
-    }
-
-    TensorIterator<T, rank> operator++(int) {
-        //crea nuovo, incrementa me e ritorna l'altro
-        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
-        increment(1);
-        return new_iterator;
-    }
-
-    TensorIterator<T, rank>& operator++() {
-        //incrementa me e ritorna la referenza
-        increment(1);
-        return *this;
-    }
-
-    TensorIterator<T, rank> operator--(int) {
-        //crea nuovo, decrementa me e ritorna l'altro
-        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
-        increment(-1);
-        return new_iterator;
-    }
-
-    TensorIterator<T, rank>& operator--() {
-        //decrementa me e ritorna la referenza
-        increment(-1);
-        return *this;
-    }
-
-
-    bool operator==(const TensorIterator<T, rank>& other_iterator) const {
-        return (&other_iterator.ttensor == ttensor && &other_iterator.indexes == indexes);
-    }
-
-    bool operator!=(const TensorIterator<T, rank>& other_iterator) const {
-        return (&other_iterator.ttensor == &ttensor && other_iterator.indexes != indexes);
-    }
-
-    TensorIterator<T, rank>& operator+=(int inc) {
-        increment(inc);
-        return *this;
-    }
-
-    TensorIterator<T, rank>& operator-=(int dec) {
-        increment(-dec);
-        return *this;
-    }
-
-    TensorIterator<T, rank> operator+(int inc) const {
-        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
-        new_iterator.increment(inc);
-        return new_iterator;
-    }
-
-    TensorIterator<T, rank> operator-(int dec) const {
-        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
-        new_iterator.increment(-dec);
-        return new_iterator;
-    }
-
-    T& operator[](int access_index) const {
-        std::vector<int> tmp_indexes = indexes;
-        indexes = std::vector<int>(indexes.size(), 0);
-        increment(access_index);
-        T& tmp_ret = ttensor(indexes);
-        indexes = tmp_indexes;
-        return tmp_ret;
-    }
-
-    bool operator<(const TensorIterator<T, rank>& other_iterator) const {
-        return (&other_iterator.ttensor == &ttensor && indexes < other_iterator.indexes);
-    }
-
-    bool operator>(const TensorIterator<T, rank>& other_iterator) const {
-        return (&other_iterator.ttensor == &ttensor && indexes > other_iterator.indexes);
-    }
-
-    bool operator<=(const TensorIterator<T, rank>& other_iterator) const {
-        return (&other_iterator.ttensor == &ttensor && indexes <= other_iterator.indexes);
-    }
-
-    bool operator>=(const TensorIterator<T, rank>& other_iterator) const {
-        return (&other_iterator.ttensor == &ttensor && indexes >= other_iterator.indexes);
-    }
-
-    int operator-(const TensorIterator<T, rank>& other_iterator) const {
-        assert(&other_iterator.ttensor == &ttensor);
-        return (single_index() - other_iterator.single_index());
-    }
-
-private:
-    Tensor<T, rank>& ttensor;
-    std::vector<int> indexes;
-    size_t sliding_index={};
-    //con size_t non si può lavorare con valori negativi, a noi serve int perchè per il decremento degli indici li mettiamo temporaneamente negativi
-
-    int single_index() const {
-        size_t single_index = 0;
-        size_t acc_mult = 1;
-        for (size_t i = indexes.size()-1; i >= 0; i--){
-            single_index += indexes[i] * acc_mult;
-            acc_mult *= ttensor.widths[i];
-        }
-        return single_index;
-    }
-
-    void increment(int index_inc) {
-        size_t i = indexes.size() - 1;
-
-        indexes[i] += index_inc;
-        //rimani dentro finchè gli indici sono fuori dal range, cioè finche l'incremento deve propagarsi all'indice superiore
-        while (i > 0 && ((indexes[i] < 0) || (indexes[i] >= ttensor.widths[i]))) {
-            if (indexes[i] < 0) {
-                index_inc = ceil(indexes[i] / ttensor.widths[i]); // numero di volte in cui viene attraversato (in negativo) l'intervallo dato dalla width = numero da decrementare all'indice a sinistra
-            } else {
-                index_inc = floor(indexes[i] / ttensor.widths[i]); //numero di volte in cui viene attraversato (in positivo) l'intervallo dato dalla width = numero da decrementare all'indice a sinistra
-            }
-            indexes[i] = indexes[i] % ttensor.widths[i];
-            indexes[i - 1] += index_inc;
-            --i;
-        }
-    }
-};
-
-//##########################################################################
 //              specializzazioni
 //##########################################################################
 
@@ -955,6 +804,158 @@ private:
 
     //data : mutable
     std::shared_ptr<std::vector<T>> data;
+};
+
+//##########################################################################
+//              ITERATORE RANDOM ACCESS
+//##########################################################################
+
+//gli operatori di confronto danno sempre false se i tensori referenziati dagli iteratori non sono uguali
+template<class T, size_t rank>
+class TensorIterator {
+public:
+
+    //costruttore che prende solo un tensore, costruisce un iteratore che parte dall'indice 0
+    TensorIterator<T, rank>(Tensor<T, rank>& tensor) : ttensor(tensor) {
+        indexes = std::vector<int>(ttensor.widths.size(), 0);
+    };
+
+    //costruttore per copia
+    TensorIterator<T, rank>(const TensorIterator<T, rank>& old_iterator) : ttensor(old_iterator.ttensor), indexes(old_iterator.indexes) {};
+
+
+    //costruttore che prende gli indici da cui partire, nesun controllo sulla loro validità
+    TensorIterator<T, rank>(Tensor<T, rank>& tensor, const std::vector<int>& starting_indexes) : indexes(starting_indexes), ttensor(tensor){};
+
+    //accesso lettura/scrittura all'elemento puntato dall'iteratore
+    T& operator*() const {
+        return ttensor(indexes);
+    }
+
+    //torna il puntatore all'elemento puntato dall'iteratore
+    T* operator->() const {
+        return &(ttensor(indexes));
+    }
+
+    TensorIterator<T, rank> operator++(int) {
+        //crea nuovo, incrementa me e ritorna l'altro
+        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
+        increment(1);
+        return new_iterator;
+    }
+
+    TensorIterator<T, rank>& operator++() {
+        //incrementa me e ritorna la referenza
+        increment(1);
+        return *this;
+    }
+
+    TensorIterator<T, rank> operator--(int) {
+        //crea nuovo, decrementa me e ritorna l'altro
+        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
+        increment(-1);
+        return new_iterator;
+    }
+
+    TensorIterator<T, rank>& operator--() {
+        //decrementa me e ritorna la referenza
+        increment(-1);
+        return *this;
+    }
+
+
+    bool operator==(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == ttensor && &other_iterator.indexes == indexes);
+    }
+
+    bool operator!=(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == &ttensor && other_iterator.indexes != indexes);
+    }
+
+    TensorIterator<T, rank>& operator+=(int inc) {
+        increment(inc);
+        return *this;
+    }
+
+    TensorIterator<T, rank>& operator-=(int dec) {
+        increment(-dec);
+        return *this;
+    }
+
+    TensorIterator<T, rank> operator+(int inc) const {
+        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
+        new_iterator.increment(inc);
+        return new_iterator;
+    }
+
+    TensorIterator<T, rank> operator-(int dec) const {
+        TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
+        new_iterator.increment(-dec);
+        return new_iterator;
+    }
+
+    T& operator[](int access_index) const {
+        std::vector<int> tmp_indexes = indexes;
+        indexes = std::vector<int>(indexes.size(), 0);
+        increment(access_index);
+        T& tmp_ret = ttensor(indexes);
+        indexes = tmp_indexes;
+        return tmp_ret;
+    }
+
+    bool operator<(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == &ttensor && indexes < other_iterator.indexes);
+    }
+
+    bool operator>(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == &ttensor && indexes > other_iterator.indexes);
+    }
+
+    bool operator<=(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == &ttensor && indexes <= other_iterator.indexes);
+    }
+
+    bool operator>=(const TensorIterator<T, rank>& other_iterator) const {
+        return (&other_iterator.ttensor == &ttensor && indexes >= other_iterator.indexes);
+    }
+
+    int operator-(const TensorIterator<T, rank>& other_iterator) const {
+        assert(&other_iterator.ttensor == &ttensor);
+        return (single_index() - other_iterator.single_index());
+    }
+
+private:
+    Tensor<T, rank>& ttensor;
+    std::vector<int> indexes;
+    size_t sliding_index={};
+    //con size_t non si può lavorare con valori negativi, a noi serve int perchè per il decremento degli indici li mettiamo temporaneamente negativi
+
+    int single_index() const {
+        size_t single_index = 0;
+        size_t acc_mult = 1;
+        for (size_t i = indexes.size()-1; i >= 0; i--){
+            single_index += indexes[i] * acc_mult;
+            acc_mult *= ttensor.widths[i];
+        }
+        return single_index;
+    }
+
+    void increment(int index_inc) {
+        size_t i = indexes.size() - 1;
+
+        indexes[i] += index_inc;
+        //rimani dentro finchè gli indici sono fuori dal range, cioè finche l'incremento deve propagarsi all'indice superiore
+        while (i > 0 && ((indexes[i] < 0) || (indexes[i] >= ttensor.widths[i]))) {
+            if (indexes[i] < 0) {
+                index_inc = ceil(indexes[i] / ttensor.widths[i]); // numero di volte in cui viene attraversato (in negativo) l'intervallo dato dalla width = numero da decrementare all'indice a sinistra
+            } else {
+                index_inc = floor(indexes[i] / ttensor.widths[i]); //numero di volte in cui viene attraversato (in positivo) l'intervallo dato dalla width = numero da decrementare all'indice a sinistra
+            }
+            indexes[i] = indexes[i] % ttensor.widths[i];
+            indexes[i - 1] += index_inc;
+            --i;
+        }
+    }
 };
 
 //##########################################################################
