@@ -837,6 +837,7 @@ public:
         return &(ttensor(indexes));
     }
 
+    // postfix operator
     TensorIterator<T, rank> operator++(int) {
         //crea nuovo, incrementa me e ritorna l'altro
         TensorIterator<T, rank> new_iterator = TensorIterator<T, rank>(*this);
@@ -844,6 +845,7 @@ public:
         return new_iterator;
     }
 
+    // prefix operator
     TensorIterator<T, rank>& operator++() {
         //incrementa me e ritorna la referenza
         increment(1);
